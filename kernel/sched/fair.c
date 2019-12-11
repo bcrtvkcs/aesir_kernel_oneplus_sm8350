@@ -7428,6 +7428,7 @@ int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu,
 			cpu_cap = capacity_of(cpu);
 			spare_cap = cpu_cap;
 			lsub_positive(&spare_cap, util);
+			util = uclamp_rq_util_with(cpu_rq(cpu), util, p);
 
 			/*
 			 * Skip CPUs that cannot satisfy the capacity request.
