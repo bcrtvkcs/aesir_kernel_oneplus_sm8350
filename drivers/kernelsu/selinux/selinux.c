@@ -152,3 +152,33 @@ u32 ksu_get_ksu_file_sid()
     }
     return ksu_file_sid;
 }
+
+#ifdef CONFIG_KSU_SUSFS
+/*
+ * SUSFS SELinux integration - SID variables and functions
+ * These were previously in the old core_hook.c (KernelSU v1.1.1)
+ */
+u32 susfs_ksu_sid = 0;
+u32 susfs_kernel_sid = 0;
+u32 susfs_zygote_sid = 0;
+
+bool susfs_is_sid_equal(void *security, u32 sid2)
+{
+    if (!security)
+        return false;
+    struct task_security_struct *tsec = (struct task_security_struct *)security;
+    return tsec->sid == sid2;
+}
+
+bool susfs_is_current_ksu_domain(void)
+{
+    return is_ksu_domain();
+}
+
+void susfs_init_sid(void)
+{
+    security_secctx_to_secid("u:r:su:s0", strlen("u:r:su:s0"), &susfs_ksu_sid);
+    security_secctx_to_secid("u:r:kernel:s0", strlen("u:r:kernel:s0"), &susfs_kernel_sid);
+    security_secctx_to_secid("u:r:zygote:s0", strlen("u:r:zygote:s0"), &susfs_zygote_sid);
+}
+#endif

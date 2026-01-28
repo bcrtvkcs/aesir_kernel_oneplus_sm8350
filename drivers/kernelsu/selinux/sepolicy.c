@@ -523,6 +523,7 @@ static bool add_filename_trans(struct policydb *db, const char *s,
         return false;
     }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
     struct filename_trans_key key;
     key.ttype = tgt->value;
     key.tclass = cls->value;
@@ -560,6 +561,40 @@ static bool add_filename_trans(struct policydb *db, const char *s,
 
     db->compat_filename_trans_count++;
     return ebitmap_set_bit(&trans->stypes, src->value - 1, 1) == 0;
+#else
+    /* Kernel 5.4: filename_trans uses struct filename_trans as key */
+    struct filename_trans ft_key;
+    ft_key.stype = src->value;
+    ft_key.ttype = tgt->value;
+    ft_key.tclass = cls->value;
+    ft_key.name = o;
+
+    struct filename_trans_datum *trans =
+        hashtab_search(db->filename_trans, &ft_key);
+    if (trans) {
+        trans->otype = def->value;
+        return true;
+    }
+
+    struct filename_trans *new_key =
+        kzalloc(sizeof(*new_key), GFP_ATOMIC);
+    if (!new_key)
+        return false;
+    new_key->stype = src->value;
+    new_key->ttype = tgt->value;
+    new_key->tclass = cls->value;
+    new_key->name = kstrdup(o, GFP_ATOMIC);
+
+    trans = kzalloc(sizeof(*trans), GFP_ATOMIC);
+    if (!trans) {
+        kfree(new_key);
+        return false;
+    }
+    trans->otype = def->value;
+
+    hashtab_insert(db->filename_trans, new_key, trans);
+    return true;
+#endif
 }
 
 static bool add_genfscon(struct policydb *db, const char *fs_name,

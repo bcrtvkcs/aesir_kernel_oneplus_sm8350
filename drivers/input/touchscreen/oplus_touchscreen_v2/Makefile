@@ -11,6 +11,8 @@ oplus_bsp_tp_comon-y += touchpanel_healthinfo/touchpanel_healthinfo.o
 oplus_bsp_tp_comon-y += touchpanel_autotest/touchpanel_autotest.o
 
 oplus_bsp_tp_comon-y += touchpanel_common_driver.o
+# Suppress frame-larger-than warning for touchpanel_proc.c (stack frame 2112 bytes)
+CFLAGS_touchpanel_proc.o += -Wno-frame-larger-than=
 oplus_bsp_tp_comon-y += touchpanel_proc.o
 oplus_bsp_tp_comon-y += tp_ioctl.o
 oplus_bsp_tp_comon-y += message_list.o

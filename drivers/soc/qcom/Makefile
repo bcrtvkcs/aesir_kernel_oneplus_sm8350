@@ -93,6 +93,8 @@ obj-$(CONFIG_QCOM_CDSP_RM) += cdsprm.o
 obj-$(CONFIG_QCOM_FSA4480_I2C) += fsa4480-i2c.o
 obj-$(CONFIG_QCOM_EUD) += eud.o
 obj-$(CONFIG_QCOM_GUESTVM) += guestvm_loader.o
+# Suppress X18 inline-asm clobber error with Clang (SCS disabled)
+CFLAGS_hyp_core_ctl.o += -Wno-inline-asm
 obj-$(CONFIG_QCOM_HYP_CORE_CTL) += hyp_core_ctl.o
 obj-$(CONFIG_MSM_QBT_HANDLER) += qbt_handler.o
 obj-$(CONFIG_QTI_CRYPTO_COMMON) += crypto-qti-common.o
