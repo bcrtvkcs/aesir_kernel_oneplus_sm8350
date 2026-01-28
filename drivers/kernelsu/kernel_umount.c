@@ -50,7 +50,7 @@ static void ksu_umount_mnt(struct path *path, int flags)
 	}
 }
 
-static void try_umount(const char *mnt, int flags)
+static void ksu_try_umount(const char *mnt, int flags)
 {
 	struct path path;
 	int err = kern_path(mnt, 0, &path);
@@ -66,6 +66,14 @@ static void try_umount(const char *mnt, int flags)
 
     ksu_umount_mnt(&path, flags);
 }
+
+#ifdef CONFIG_KSU_SUSFS
+/* SUSFS compatibility wrapper - old API used by fs/susfs.c */
+void try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid)
+{
+	ksu_try_umount(mnt, flags);
+}
+#endif
 
 struct umount_tw {
 	struct callback_head cb;
@@ -84,7 +92,7 @@ static void umount_tw_func(struct callback_head *cb)
     down_read(&mount_list_lock);
     list_for_each_entry(entry, &mount_list, list) {
         pr_info("%s: unmounting: %s flags 0x%x\n", __func__, entry->umountable, entry->flags);
-        try_umount(entry->umountable, entry->flags);
+        ksu_try_umount(entry->umountable, entry->flags);
     }
     up_read(&mount_list_lock);
 

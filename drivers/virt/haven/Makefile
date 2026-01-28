@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
+# Suppress X18 inline-asm clobber error with Clang (SCS disabled)
+subdir-ccflags-y += -Wno-inline-asm
 obj-$(CONFIG_HH_CTRL)		+= hh_ctrl.o
 obj-$(CONFIG_HH_MSGQ)		+= hh_msgq.o
 obj-$(CONFIG_HH_RM_DRV)		+= hh_rm_drv.o

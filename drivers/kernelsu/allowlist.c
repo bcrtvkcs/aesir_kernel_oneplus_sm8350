@@ -8,6 +8,7 @@
 #include <linux/list.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
+#include <linux/sched/task.h>
 #include <linux/types.h>
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)

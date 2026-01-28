@@ -2,7 +2,12 @@
 #include <linux/preempt.h>
 #include <linux/printk.h>
 #include <linux/mm.h>
+#include <linux/version.h>
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
 #include <linux/pgtable.h>
+#else
+#include <asm/pgtable.h>
+#endif
 #include <linux/uaccess.h>
 #include <asm/current.h>
 #include <linux/cred.h>
@@ -177,3 +182,32 @@ void ksu_sucompat_exit()
 {
 	ksu_unregister_feature_handler(KSU_FEATURE_SU_COMPAT);
 }
+
+#ifdef CONFIG_KSU_SUSFS_SUS_SU
+/*
+ * SUSFS SUS_SU compatibility wrapper for old ksu_handle_execveat_sucompat API.
+ * The old API was called after getname() with struct filename ** parameters.
+ * This wrapper replaces the filename if it points to /system/bin/su.
+ */
+int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
+				 void *argv, void *envp, int *flags)
+{
+	if (!filename_ptr || !*filename_ptr)
+		return 0;
+
+	if (!ksu_is_allow_uid_for_current(current_uid().val))
+		return 0;
+
+	if (!strcmp((*filename_ptr)->name, SU_PATH)) {
+		pr_info("execveat su->sh (sus_su compat)!\n");
+		/* Replace with sh path */
+		struct filename *new_fn = getname_kernel(SH_PATH);
+		if (!IS_ERR(new_fn)) {
+			putname(*filename_ptr);
+			*filename_ptr = new_fn;
+		}
+	}
+
+	return 0;
+}
+#endif

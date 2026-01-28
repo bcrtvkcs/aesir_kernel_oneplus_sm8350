@@ -8,6 +8,12 @@
 #include "klog.h" // IWYU pragma: keep
 #include "seccomp_cache.h"
 
+/*
+ * Seccomp action cache (SECCOMP_ARCH_NATIVE_NR) was added in kernel 5.15+.
+ * For older kernels, these functions are no-ops since the cache doesn't exist.
+ */
+#ifdef SECCOMP_ARCH_NATIVE_NR
+
 struct action_cache {
 	DECLARE_BITMAP(allow_native, SECCOMP_ARCH_NATIVE_NR);
 #ifdef SECCOMP_ARCH_COMPAT
@@ -63,3 +69,17 @@ void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
     }
 #endif
 }
+
+#else /* !SECCOMP_ARCH_NATIVE_NR - kernel 5.4 and older */
+
+void ksu_seccomp_clear_cache(struct seccomp_filter *filter, int nr)
+{
+    /* no-op: seccomp action cache not available in this kernel */
+}
+
+void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
+{
+    /* no-op: seccomp action cache not available in this kernel */
+}
+
+#endif /* SECCOMP_ARCH_NATIVE_NR */

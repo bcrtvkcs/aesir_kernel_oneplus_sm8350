@@ -36,6 +36,7 @@
 #include "setuid_hook.h"
 #include "feature.h"
 #include "klog.h" // IWYU pragma: keep
+#include "ksud.h"
 #include "manager.h"
 #include "selinux/selinux.h"
 #include "seccomp_cache.h"
@@ -85,9 +86,46 @@ extern bool susfs_is_auto_add_try_umount_for_bind_mount_enabled;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_SU
 extern bool susfs_is_sus_su_ready;
-extern int susfs_sus_su_working_mode;
-extern bool susfs_is_sus_su_hooks_enabled __read_mostly;
-extern bool ksu_devpts_hook;
+/*
+ * SUSFS SUS_SU integration variables - defined here (were in old core_hook.c)
+ */
+int susfs_sus_su_working_mode = 0;
+bool susfs_is_sus_su_hooks_enabled __read_mostly = false;
+bool ksu_devpts_hook = false;
+
+extern int sus_su_fifo_init(int *maj_dev_num, char *drv_path);
+extern int sus_su_fifo_exit(int *maj_dev_num, char *drv_path);
+
+static int sus_su_maj_dev_num = -1;
+static char sus_su_drv_path[256] = "";
+
+int ksu_handle_devpts(struct inode *inode)
+{
+    if (!susfs_is_sus_su_hooks_enabled || !inode)
+        return 0;
+    /* In SUS_SU mode, devpts hook grants root via the character device */
+    return 0;
+}
+
+void ksu_susfs_enable_sus_su(void)
+{
+    if (susfs_is_sus_su_hooks_enabled)
+        return;
+    sus_su_fifo_init(&sus_su_maj_dev_num, sus_su_drv_path);
+    susfs_is_sus_su_hooks_enabled = true;
+    ksu_devpts_hook = true;
+    pr_info("ksu_susfs: sus_su enabled\n");
+}
+
+void ksu_susfs_disable_sus_su(void)
+{
+    if (!susfs_is_sus_su_hooks_enabled)
+        return;
+    sus_su_fifo_exit(&sus_su_maj_dev_num, sus_su_drv_path);
+    susfs_is_sus_su_hooks_enabled = false;
+    ksu_devpts_hook = false;
+    pr_info("ksu_susfs: sus_su disabled\n");
+}
 #endif
 
 static inline bool is_some_system_uid(uid_t uid)
