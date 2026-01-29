@@ -16,6 +16,7 @@
 #include "syscall_hook_manager.h"
 #include "ksud.h"
 #include "supercalls.h"
+#include "selinux/selinux.h"
 
 int __init kernelsu_init(void)
 {
@@ -31,6 +32,7 @@ int __init kernelsu_init(void)
 
 #ifdef CONFIG_KSU_SUSFS
 	susfs_init();
+	susfs_init_sid();
 #endif
 
 	ksu_feature_init();

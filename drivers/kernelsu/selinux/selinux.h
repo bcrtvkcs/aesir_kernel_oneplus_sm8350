@@ -25,4 +25,14 @@ u32 ksu_get_ksu_file_sid();
 
 int handle_sepolicy(unsigned long arg3, void __user *arg4);
 
+#ifdef CONFIG_KSU_SUSFS
+extern u32 susfs_ksu_sid;
+extern u32 susfs_kernel_sid;
+extern u32 susfs_zygote_sid;
+
+bool susfs_is_sid_equal(void *security, u32 sid2);
+bool susfs_is_current_ksu_domain(void);
+void susfs_init_sid(void);
+#endif
+
 #endif
