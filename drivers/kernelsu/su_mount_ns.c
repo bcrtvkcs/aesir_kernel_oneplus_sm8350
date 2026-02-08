@@ -20,9 +20,15 @@
 #include "ksu.h"
 #include "su_mount_ns.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
 extern int path_mount(const char *dev_name, struct path *path,
                       const char *type_page, unsigned long flags,
                       void *data_page);
+#else
+extern long do_mount(const char *dev_name, const char __user *dir_name,
+                     const char *type_page, unsigned long flags,
+                     void *data_page);
+#endif
 
 #if defined(__aarch64__)
 extern long __arm64_sys_setns(const struct pt_regs *regs);
@@ -152,10 +158,20 @@ static void ksu_mnt_ns_individual(void)
     }
 
     // make root mount private
+    int pm_ret;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 9, 0)
     struct path root_path;
     get_fs_root(current->fs, &root_path);
-    int pm_ret = path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC, NULL);
+    pm_ret = path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC, NULL);
     path_put(&root_path);
+#else
+    {
+        mm_segment_t old_fs = get_fs();
+        set_fs(KERNEL_DS);
+        pm_ret = do_mount(NULL, "/", NULL, MS_PRIVATE | MS_REC, NULL);
+        set_fs(old_fs);
+    }
+#endif
 
     if (pm_ret < 0) {
         pr_err("failed to make root private, err: %d\n", pm_ret);
