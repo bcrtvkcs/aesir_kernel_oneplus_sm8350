@@ -16,7 +16,15 @@
 #include "syscall_hook_manager.h"
 #include "ksud.h"
 #include "supercalls.h"
+#include "ksu.h"
+#include "file_wrapper.h"
 #include "selinux/selinux.h"
+
+extern void ksu_avc_spoof_init(void);
+extern void ksu_avc_spoof_exit(void);
+extern void ksu_avc_spoof_late_init(void);
+
+struct cred *ksu_cred;
 
 int __init kernelsu_init(void)
 {
@@ -30,12 +38,19 @@ int __init kernelsu_init(void)
 	pr_alert("*************************************************************");
 #endif
 
+	ksu_cred = prepare_creds();
+	if (!ksu_cred) {
+		pr_err("prepare cred failed!\n");
+	}
+
 #ifdef CONFIG_KSU_SUSFS
 	susfs_init();
 	susfs_init_sid();
 #endif
 
 	ksu_feature_init();
+
+	ksu_avc_spoof_init();
 
 	ksu_supercalls_init();
 
@@ -46,6 +61,8 @@ int __init kernelsu_init(void)
 	ksu_throne_tracker_init();
 
 	ksu_ksud_init();
+
+	ksu_file_wrapper_init();
 
 #ifdef MODULE
 #ifndef CONFIG_KSU_DEBUG
@@ -70,7 +87,13 @@ void kernelsu_exit(void)
 
 	ksu_supercalls_exit();
 
+	ksu_avc_spoof_exit();
+
 	ksu_feature_exit();
+
+	if (ksu_cred) {
+		put_cred(ksu_cred);
+	}
 }
 
 module_init(kernelsu_init);

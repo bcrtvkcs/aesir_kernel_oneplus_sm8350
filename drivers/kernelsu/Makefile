@@ -14,6 +14,8 @@ kernelsu-objs += ksud.o
 kernelsu-objs += embed_ksud.o
 kernelsu-objs += seccomp_cache.o
 kernelsu-objs += file_wrapper.o
+kernelsu-objs += su_mount_ns.o
+kernelsu-objs += extras.o
 kernelsu-objs += util.o
 
 kernelsu-objs += selinux/selinux.o
