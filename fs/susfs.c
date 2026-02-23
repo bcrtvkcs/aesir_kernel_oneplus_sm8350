@@ -341,8 +341,7 @@ void susfs_run_sus_path_loop(uid_t uid) {
 	struct path path;
 	struct inode *inode;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(cursor, &LH_SUS_PATH_LOOP, list) {
+	list_for_each_entry(cursor, &LH_SUS_PATH_LOOP, list) {
 		if (!kern_path(cursor->target_pathname, 0, &path)) {
 			inode = d_backing_inode(path.dentry);
 			if (!inode || !inode->i_mapping) {
@@ -360,7 +359,6 @@ void susfs_run_sus_path_loop(uid_t uid) {
 			SUSFS_LOGI("re-flag AS_FLAGS_SUS_PATH on path '%s' for uid: %u\n", cursor->target_pathname, uid);
 		}
 	}
-	rcu_read_unlock();
 }
 
 int susfs_auto_add_sus_path_internal(const char *pathname) {

@@ -78,6 +78,10 @@ static inline void susfs_set_current_proc_umounted(void) {
 	set_ti_thread_flag(&current->thread_info, TIF_PROC_UMOUNTED);
 }
 
+static inline bool susfs_is_current_proc_umounted_app(void) {
+	return susfs_is_current_proc_umounted() && current_uid().val >= 10000;
+}
+
 static inline bool susfs_is_system_uid(void) {
 	return (current_uid().val % 100000) < 10000;
 }
