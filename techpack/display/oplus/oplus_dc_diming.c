@@ -62,6 +62,13 @@ struct hbm_status
 };
 
 struct hbm_status oplus_hbm_status = {0};
+
+void oplus_hbm_status_reset(void)
+{
+	memset(&oplus_hbm_status, 0, sizeof(oplus_hbm_status));
+}
+EXPORT_SYMBOL(oplus_hbm_status_reset);
+
 int dsi_panel_tx_cmd_hbm_pre_check(struct dsi_panel *panel, enum dsi_cmd_set_type type, const char** prop_map)
 {
 	int ret = 0;
