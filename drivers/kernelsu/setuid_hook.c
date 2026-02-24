@@ -326,47 +326,10 @@ void susfs_schedule_hosts_check(void)
 	schedule_delayed_work(&susfs_hosts_delayed_work, msecs_to_jiffies(30000));
 }
 
-#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-void susfs_schedule_resetprop_sanitize_early(void);
-#endif
-
 void susfs_on_module_mounted(void)
 {
 	susfs_try_setup_hosts_hide();
-#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-	susfs_schedule_resetprop_sanitize_early();
-#endif
 }
-
-#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-static struct delayed_work susfs_resetprop_work_1;
-static struct delayed_work susfs_resetprop_work_2;
-static struct delayed_work susfs_resetprop_work_3;
-
-extern int susfs_auto_sanitize_resetprop_traces(void);
-
-static void susfs_resetprop_sanitize_fn(struct work_struct *work)
-{
-	susfs_auto_sanitize_resetprop_traces();
-}
-
-void susfs_schedule_resetprop_sanitize_early(void)
-{
-	/* Round 1: 5s after module_mounted (right after resetprop runs) */
-	INIT_DELAYED_WORK(&susfs_resetprop_work_1, susfs_resetprop_sanitize_fn);
-	schedule_delayed_work(&susfs_resetprop_work_1, msecs_to_jiffies(5000));
-}
-
-void susfs_schedule_resetprop_sanitize_late(void)
-{
-	/* Round 2: 10s after boot_completed */
-	INIT_DELAYED_WORK(&susfs_resetprop_work_2, susfs_resetprop_sanitize_fn);
-	schedule_delayed_work(&susfs_resetprop_work_2, msecs_to_jiffies(10000));
-	/* Round 3: 30s after boot_completed (catch late modules) */
-	INIT_DELAYED_WORK(&susfs_resetprop_work_3, susfs_resetprop_sanitize_fn);
-	schedule_delayed_work(&susfs_resetprop_work_3, msecs_to_jiffies(30000));
-}
-#endif // #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
 
 static inline bool is_zygote_isolated_service_uid(uid_t uid)
 {

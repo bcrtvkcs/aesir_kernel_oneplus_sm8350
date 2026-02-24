@@ -135,14 +135,6 @@ struct st_susfs_sus_map {
 };
 #endif
 
-/* hide_resetprop_traces */
-#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-struct st_susfs_hide_resetprop_traces {
-	char                                    prop_dir[SUSFS_MAX_LEN_PATHNAME];
-	int                                     err;
-};
-#endif
-
 /* avc log spoofing */
 struct st_susfs_avc_log_spoofing {
 	bool                                    enabled;
@@ -220,11 +212,6 @@ int susfs_auto_add_open_redirect_internal(const char *target, const char *redire
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 void susfs_add_sus_map(void __user **user_info);
 int susfs_auto_add_sus_map_internal(const char *pathname);
-#endif
-
-/* hide_resetprop_traces */
-#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-void susfs_hide_resetprop_traces(void __user **user_info);
 #endif
 
 void susfs_set_avc_log_spoofing(void __user **user_info);
