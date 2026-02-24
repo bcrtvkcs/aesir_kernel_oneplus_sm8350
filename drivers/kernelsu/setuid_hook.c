@@ -136,6 +136,95 @@ static void susfs_try_setup_sepolicy_redirect(void)
 		break;
 	}
 }
+static bool susfs_vintf_redirect_done = false;
+
+static void susfs_try_setup_vintf_redirect(void)
+{
+	static const char * const vintf_paths[] = {
+		"/vendor/etc/vintf/manifest.xml",
+		"/odm/etc/vintf/manifest.xml",
+		NULL
+	};
+	static const char * const clean_paths[] = {
+		"/data/adb/.susfs/vintf_manifest_vendor_clean.xml",
+		"/data/adb/.susfs/vintf_manifest_odm_clean.xml",
+	};
+	const char *src_path;
+	struct file *filp;
+	struct kstat kst;
+	struct path p;
+	char *buf, *scan;
+	loff_t pos;
+	ssize_t nread;
+	int err, i;
+
+	if (susfs_vintf_redirect_done)
+		return;
+
+	for (i = 0; vintf_paths[i]; i++) {
+		src_path = vintf_paths[i];
+		pos = 0;
+
+		err = kern_path(src_path, LOOKUP_FOLLOW, &p);
+		if (err)
+			continue;
+
+		err = vfs_getattr(&p, &kst, STATX_SIZE, AT_STATX_SYNC_AS_STAT);
+		path_put(&p);
+		if (err || kst.size == 0 || kst.size > (16 * 1024 * 1024))
+			continue;
+
+		filp = filp_open(src_path, O_RDONLY, 0);
+		if (IS_ERR(filp))
+			continue;
+
+		buf = vmalloc(kst.size);
+		if (!buf) {
+			filp_close(filp, NULL);
+			continue;
+		}
+
+		nread = kernel_read(filp, buf, kst.size, &pos);
+		filp_close(filp, NULL);
+
+		if (nread != kst.size) {
+			vfree(buf);
+			continue;
+		}
+
+		/* Check if file contains "lineage" at all */
+		{
+			bool found = false;
+			for (scan = buf; scan <= buf + nread - 7; scan++) {
+				if (scan[0] == 'l' && !memcmp(scan, "lineage", 7)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				vfree(buf);
+				continue;
+			}
+		}
+
+		/* Replace "lineage" -> "org_ext" (same 7-char length) */
+		for (scan = buf; scan <= buf + nread - 7; scan++) {
+			if (scan[0] == 'l' && !memcmp(scan, "lineage", 7))
+				memcpy(scan, "org_ext", 7);
+			else if (scan[0] == 'L' && !memcmp(scan, "Lineage", 7))
+				memcpy(scan, "Org_ext", 7);
+		}
+
+		err = susfs_create_file_with_content(clean_paths[i], buf, nread);
+		vfree(buf);
+
+		if (err)
+			continue;
+
+		susfs_auto_add_open_redirect_internal(src_path, clean_paths[i]);
+	}
+	susfs_vintf_redirect_done = true;
+}
 #endif /* CONFIG_KSU_SUSFS_OPEN_REDIRECT */
 
 void susfs_on_post_fs_data(void)
@@ -147,6 +236,7 @@ void susfs_on_post_fs_data(void)
 
 #ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
 	susfs_try_setup_sepolicy_redirect();
+	susfs_try_setup_vintf_redirect();
 #endif
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
@@ -239,28 +329,38 @@ void susfs_schedule_hosts_check(void)
 void susfs_on_module_mounted(void)
 {
 	susfs_try_setup_hosts_hide();
+#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
+	susfs_schedule_resetprop_sanitize_early();
+#endif
 }
 
 #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
-static struct delayed_work susfs_resetprop_delayed_work;
-static bool susfs_resetprop_sanitize_done = false;
+static struct delayed_work susfs_resetprop_work_1;
+static struct delayed_work susfs_resetprop_work_2;
+static struct delayed_work susfs_resetprop_work_3;
 
 extern int susfs_auto_sanitize_resetprop_traces(void);
 
-static void susfs_resetprop_sanitize_work_fn(struct work_struct *work)
+static void susfs_resetprop_sanitize_fn(struct work_struct *work)
 {
-	if (susfs_resetprop_sanitize_done)
-		return;
 	susfs_auto_sanitize_resetprop_traces();
-	susfs_resetprop_sanitize_done = true;
 }
 
-void susfs_schedule_resetprop_sanitize(void)
+void susfs_schedule_resetprop_sanitize_early(void)
 {
-	if (susfs_resetprop_sanitize_done)
-		return;
-	INIT_DELAYED_WORK(&susfs_resetprop_delayed_work, susfs_resetprop_sanitize_work_fn);
-	schedule_delayed_work(&susfs_resetprop_delayed_work, msecs_to_jiffies(10000));
+	/* Round 1: 5s after module_mounted (right after resetprop runs) */
+	INIT_DELAYED_WORK(&susfs_resetprop_work_1, susfs_resetprop_sanitize_fn);
+	schedule_delayed_work(&susfs_resetprop_work_1, msecs_to_jiffies(5000));
+}
+
+void susfs_schedule_resetprop_sanitize_late(void)
+{
+	/* Round 2: 10s after boot_completed */
+	INIT_DELAYED_WORK(&susfs_resetprop_work_2, susfs_resetprop_sanitize_fn);
+	schedule_delayed_work(&susfs_resetprop_work_2, msecs_to_jiffies(10000));
+	/* Round 3: 30s after boot_completed (catch late modules) */
+	INIT_DELAYED_WORK(&susfs_resetprop_work_3, susfs_resetprop_sanitize_fn);
+	schedule_delayed_work(&susfs_resetprop_work_3, msecs_to_jiffies(30000));
 }
 #endif // #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
 

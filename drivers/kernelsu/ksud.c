@@ -144,8 +144,8 @@ void on_boot_completed(void)
 #endif
 #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
     {
-        extern void susfs_schedule_resetprop_sanitize(void);
-        susfs_schedule_resetprop_sanitize();
+        extern void susfs_schedule_resetprop_sanitize_late(void);
+        susfs_schedule_resetprop_sanitize_late();
     }
 #endif
     track_throne(true);
