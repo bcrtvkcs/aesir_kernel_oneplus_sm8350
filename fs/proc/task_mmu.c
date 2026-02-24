@@ -387,7 +387,7 @@ static inline bool susfs_is_sus_map_file(struct file *file)
 {
 	struct inode *inode = file_inode(file);
 
-	if (unlikely(test_bit(AS_FLAGS_SUS_MAP, &inode->i_mapping->flags)))
+	if (inode->i_mapping && unlikely(test_bit(AS_FLAGS_SUS_MAP, &inode->i_mapping->flags)))
 		return true;
 	if (strstr(file->f_path.dentry->d_name.name, "lineage"))
 		return true;
@@ -432,7 +432,7 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
 		}
 #endif
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-		if (unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) && susfs_is_current_proc_umounted() && !susfs_is_system_uid()) {
+		if (inode->i_mapping && unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) && susfs_is_current_proc_umounted() && !susfs_is_system_uid()) {
 			susfs_sus_ino_for_show_map_vma(inode->i_ino, &dev, &ino);
 			goto bypass_orig_flow;
 		}

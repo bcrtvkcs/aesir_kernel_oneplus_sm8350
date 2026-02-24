@@ -224,7 +224,7 @@ void susfs_add_sus_path(void __user **user_info) {
 
 	if (inode->i_sb->s_magic == FUSE_SUPER_MAGIC) {
 		struct fuse_inode *fi = get_fuse_inode(inode);
-		if (fi) {
+		if (fi && fi->inode.i_mapping) {
 			set_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags);
 			SUSFS_LOGI("flagged AS_FLAGS_SUS_PATH on FUSE pathname: '%s', fi->nodeid: %llu\n",
 						resolved_pathname, fi->nodeid);
@@ -350,7 +350,7 @@ void susfs_run_sus_path_loop(uid_t uid) {
 			}
 			if (inode->i_sb->s_magic == FUSE_SUPER_MAGIC) {
 				struct fuse_inode *fi = get_fuse_inode(inode);
-				if (fi)
+				if (fi && fi->inode.i_mapping)
 					set_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags);
 			} else {
 				set_bit(AS_FLAGS_SUS_PATH, &inode->i_mapping->flags);
@@ -487,9 +487,11 @@ bool susfs_is_inode_sus_path(struct mnt_idmap* idmap, struct inode *inode) {
 	struct fuse_inode *fi = NULL;
 	if (current_uid().val < 10000 || !susfs_is_current_proc_umounted())
 		return false;
+	if (!inode->i_mapping)
+		return false;
 	if (inode->i_sb->s_magic == FUSE_SUPER_MAGIC) {
 		fi = get_fuse_inode(inode);
-		if (!fi)
+		if (!fi || !fi->inode.i_mapping)
 			return false;
 		if (unlikely(test_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags) &&
 			is_i_uid_not_allowed(i_uid_into_vfsuid(idmap, &fi->inode).val)))
@@ -512,9 +514,11 @@ bool susfs_is_inode_sus_path(struct inode *inode) {
 	struct fuse_inode *fi = NULL;
 	if (current_uid().val < 10000 || !susfs_is_current_proc_umounted())
 		return false;
+	if (!inode->i_mapping)
+		return false;
 	if (inode->i_sb->s_magic == FUSE_SUPER_MAGIC) {
 		fi = get_fuse_inode(inode);
-		if (!fi)
+		if (!fi || !fi->inode.i_mapping)
 			return false;
 		if (unlikely(test_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags) &&
 			is_i_uid_not_allowed(i_uid_into_mnt(i_user_ns(&fi->inode), &fi->inode).val)))
@@ -537,9 +541,11 @@ bool susfs_is_inode_sus_path(struct inode *inode) {
 	struct fuse_inode *fi = NULL;
 	if (current_uid().val < 10000 || !susfs_is_current_proc_umounted())
 		return false;
+	if (!inode->i_mapping)
+		return false;
 	if (inode->i_sb->s_magic == FUSE_SUPER_MAGIC) {
 		fi = get_fuse_inode(inode);
-		if (!fi)
+		if (!fi || !fi->inode.i_mapping)
 			return false;
 		if (unlikely(test_bit(AS_FLAGS_SUS_PATH, &fi->inode.i_mapping->flags) &&
 			is_i_uid_not_allowed(fi->inode.i_uid.val)))
