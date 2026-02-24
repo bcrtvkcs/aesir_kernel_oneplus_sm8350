@@ -4507,11 +4507,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	bool needs_hw_reset = false, is_cmd_mode;
 	int i, rc, ret = 0;
 	struct msm_display_info *disp_info;
-#ifdef OPLUS_BUG_STABILITY
-	/* Fix low light because of sync_ panel_brightness flash problem */
-	struct dsi_display *display = NULL;
-	struct sde_connector *c_conn = NULL;
-#endif /* OPLUS_BUG_STABILITY */
 
 	if (!drm_enc || !params || !drm_enc->dev ||
 		!drm_enc->dev->dev_private) {
@@ -4532,20 +4527,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 #ifdef OPLUS_BUG_STABILITY
 	if (sde_enc->cur_master) {
 		sde_connector_update_backlight(sde_enc->cur_master->connector, false);
-		/* Fix low light because of sync_ panel_brightness flash problem */
-		c_conn = to_sde_connector(sde_enc->cur_master->connector);
-		if(c_conn) {
-			if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
-				sde_connector_update_hbm(sde_enc->cur_master->connector);
-			} else {
-				display = c_conn->display;
-				if(display && display->panel && display->panel->oplus_priv.vendor_name) {
-					if (strcmp(display->panel->oplus_priv.vendor_name, "AMB655X") && strcmp(display->panel->oplus_priv.vendor_name, "AMB670YF01") && strcmp(display->panel->oplus_priv.vendor_name, "AMS662ZS01")) {
-						sde_connector_update_hbm(sde_enc->cur_master->connector);
-					}
-				}
-			}
-		}
 	}
 #endif /* OPLUS_BUG_STABILITY */
 
@@ -4635,6 +4616,14 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 			ret = rc;
 		}
 	}
+
+#ifdef OPLUS_BUG_STABILITY
+	/* Call update_hbm AFTER pre_kickoff so that LP1 entry (which clears
+	 * stale oplus_dimlayer_hbm) is processed before HBM decisions. */
+	if (sde_enc->cur_master && sde_enc->cur_master->connector) {
+		sde_connector_update_hbm(sde_enc->cur_master->connector);
+	}
+#endif /* OPLUS_BUG_STABILITY */
 
 	if (sde_enc->cur_master &&
 		((is_cmd_mode && sde_enc->cur_master->cont_splash_enabled) ||
