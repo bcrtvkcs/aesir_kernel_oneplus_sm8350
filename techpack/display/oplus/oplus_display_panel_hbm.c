@@ -272,8 +272,6 @@ int oplus_display_panel_set_hbm(void *buf)
 	 * (oplus_onscreenfingerprint.c:263). FOD uses a completely
 	 * separate path (panel->is_hbm_enabled).
 	 * Originally fixed for AMB670YF01 only; now extended to all panels. */
-	pr_info("%s: blocked hbm_mode write (%d) - FOD uses is_hbm_enabled\n",
-		__func__, (*temp_save));
 	return 0;
 
 	__oplus_display_set_hbm((*temp_save));

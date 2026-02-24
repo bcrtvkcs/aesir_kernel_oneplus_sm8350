@@ -488,9 +488,6 @@ static ssize_t oplus_display_set_hbm(struct kobject *obj,
 		return -EINVAL;
 	}
 
-	/* Block all hbm_mode writes from userspace for all panels.
-	 * See oplus_display_panel_set_hbm() for full explanation. */
-	pr_info("%s: blocked hbm_mode write (%d)\n", __func__, temp_save);
 	return count;
 
 	__oplus_display_set_hbm(temp_save);

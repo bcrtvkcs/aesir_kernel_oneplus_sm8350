@@ -4994,14 +4994,7 @@ static int sde_crtc_onscreenfinger_atomic_check(struct sde_crtc_state *cstate,
 			return 0;
 		}
 
-		/* Require fppressed layer (PLANE_PROP_CUSTOM == 2) to be present
-		 * in the atomic commit before enabling fingerprint_mode.
-		 * oplus_dimlayer_hbm alone is unreliable — it can be stale from
-		 * a previous fingerprint session, causing spurious HBM during
-		 * DPMS transitions (e.g. entering AOD) where no fingerprint
-		 * is actually pressed. The plane layer state is authoritative. */
-		if (dimlayer_hbm && display->panel->bl_config.bl_level != 0
-		    && fppressed_index >= 0)
+		if (dimlayer_hbm && display->panel->bl_config.bl_level != 0)
 			cstate->fingerprint_mode = true;
 		else
 			cstate->fingerprint_mode = false;
