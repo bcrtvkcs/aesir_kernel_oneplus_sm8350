@@ -5,8 +5,15 @@
 #include <linux/workqueue.h>
 #include <linux/cred.h>
 
-#define KERNEL_SU_VERSION KSU_VERSION
-#define KERNEL_SU_VERSION_TAG KSU_VERSION_TAG
+/*
+ * KernelSU-Next version - single source of truth.
+ * Defined here (not in Kbuild ccflags) so that gcc header dependency
+ * tracking forces recompilation of all consumers on dirty builds.
+ * Update KSU_GIT_VERSION when syncing with upstream.
+ */
+#define KSU_GIT_VERSION 3014
+#define KERNEL_SU_VERSION (30000 + KSU_GIT_VERSION)
+#define KERNEL_SU_VERSION_TAG "v3.0.1"
 
 #define EVENT_POST_FS_DATA 1
 #define EVENT_BOOT_COMPLETED 2
