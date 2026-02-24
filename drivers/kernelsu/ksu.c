@@ -87,10 +87,6 @@ int __init kernelsu_init(void)
 	ret = susfs_init();
 	if (ret)
 		goto err_throne;
-
-	ret = susfs_start_sdcard_monitor_fn();
-	if (ret)
-		goto err_throne;
 #endif // #ifdef CONFIG_KSU_SUSFS
 
 #ifndef CONFIG_KSU_SUSFS
