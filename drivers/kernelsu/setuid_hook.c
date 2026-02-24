@@ -326,6 +326,10 @@ void susfs_schedule_hosts_check(void)
 	schedule_delayed_work(&susfs_hosts_delayed_work, msecs_to_jiffies(30000));
 }
 
+#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
+void susfs_schedule_resetprop_sanitize_early(void);
+#endif
+
 void susfs_on_module_mounted(void)
 {
 	susfs_try_setup_hosts_hide();
