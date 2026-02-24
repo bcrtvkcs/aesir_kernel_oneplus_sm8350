@@ -2266,13 +2266,36 @@ static ssize_t oplus_display_notify_fp_press(struct kobject *obj,
 
 	oplus_onscreenfp_status = onscreenfp_status;
 
-	/* Removed: Immediate AOD_HBM_ON on fingerprint press notification.
-	 * Redundant with sde_connector_update_hbm() fingerprint enter path
-	 * (oplus_dc_diming.c) which has proper is_hbm_enabled tracking.
-	 * This untracked path sent AOD_HBM_ON (max brightness 0x0EFF)
-	 * without guaranteed AOD_HBM_OFF reversal, leaving the panel stuck
-	 * at 100% brightness. FOD HBM is now handled exclusively by the
-	 * frame-kickoff path with ~16ms latency — acceptable for FOD. */
+	if (onscreenfp_status &&
+			OPLUS_DISPLAY_AOD_SCENE == get_oplus_display_scene()) {
+		/* enable the clk vote for CMD mode panels */
+		if (display->config.panel_mode == DSI_OP_CMD_MODE) {
+			dsi_display_clk_ctrl(display->dsi_clk_handle,
+					     DSI_ALL_CLKS, DSI_CLK_ON);
+		}
+
+		mutex_lock(&display->panel->panel_lock);
+
+		if (display->panel->panel_initialized) {
+			if ((!strcmp(display->panel->oplus_priv.vendor_name, "S6E3HC3") && (display->panel->panel_id2 >= 5)) ||
+				(!strcmp(display->panel->oplus_priv.vendor_name, "AMB670YF01") && (display->panel->panel_id2 >= 5))) {
+				err = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_AOD_HBM_ON_PVT);
+			} else {
+				err = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_AOD_HBM_ON);
+			}
+		}
+
+		mutex_unlock(&display->panel->panel_lock);
+
+		if (err) {
+			pr_err("failed to setting aod hbm on mode %d\n", err);
+		}
+
+		if (display->config.panel_mode == DSI_OP_CMD_MODE) {
+			dsi_display_clk_ctrl(display->dsi_clk_handle,
+					     DSI_ALL_CLKS, DSI_CLK_OFF);
+		}
+	}
 
 	oplus_onscreenfp_vblank_count = drm_crtc_vblank_count(
 					       dsi_connector->state->crtc);
@@ -2819,16 +2842,32 @@ int dsi_display_oplus_set_power(struct drm_connector *connector,
 				}
 			}
 			#endif
-			/* Removed: AOD_HBM_ON during LP->ON transition.
-			 * Always use NOLP to cleanly exit AOD mode. If fingerprint
-			 * is actively pressed, sde_connector_update_hbm() will
-			 * enable HBM on the next frame via the tracked
-			 * is_hbm_enabled path. The previous code set
-			 * AOD_HBM_SCENE which could persist and leave the panel
-			 * at 100% brightness (0x51=0x0EFF) since NOLP does not
-			 * reset the brightness register. */
-			rc = dsi_panel_set_nolp(display->panel);
-			set_oplus_display_scene(OPLUS_DISPLAY_NORMAL_SCENE);
+			if (sde_crtc_get_fingerprint_mode(connector->state->crtc->state) && oplus_dimlayer_hbm &&
+					sde_crtc_get_fingerprint_pressed(connector->state->crtc->state)) {
+				mutex_lock(&display->panel->panel_lock);
+				dsi_display_clk_ctrl(display->dsi_clk_handle,
+							DSI_CORE_CLK, DSI_CLK_ON);
+
+				if (display->panel->panel_initialized) {
+					if ((!strcmp(display->panel->oplus_priv.vendor_name, "S6E3HC3") && (display->panel->panel_id2 >= 5)) ||
+						(!strcmp(display->panel->oplus_priv.vendor_name, "AMB670YF01") && (display->panel->panel_id2 >= 5))) {
+						rc = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_AOD_HBM_ON_PVT);
+					} else {
+						rc = dsi_panel_tx_cmd_set(display->panel, DSI_CMD_AOD_HBM_ON);
+					}
+				} else {
+					pr_err("[%s][%d]failed to setting dsi command", __func__, __LINE__);
+				}
+
+				dsi_display_clk_ctrl(display->dsi_clk_handle,
+							DSI_CORE_CLK, DSI_CLK_OFF);
+				mutex_unlock(&display->panel->panel_lock);
+				set_oplus_display_scene(OPLUS_DISPLAY_AOD_HBM_SCENE);
+
+			} else {
+				rc = dsi_panel_set_nolp(display->panel);
+				set_oplus_display_scene(OPLUS_DISPLAY_NORMAL_SCENE);
+			}
 		}
 		if (!sde_crtc_get_fingerprint_mode(connector->state->crtc->state)) {
 			oplus_dsi_update_seed_mode(display);

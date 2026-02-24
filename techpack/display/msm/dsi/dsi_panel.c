@@ -5441,10 +5441,6 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 	 * from (oplus_dimlayer_hbm && bl_level!=0), which triggers spurious
 	 * AOD HBM ON commands and 100% brightness during AOD. */
 	oplus_dimlayer_hbm = 0;
-	/* Reset HBM dedup tracking so stale hbm_pvt_status from a
-	 * previous fingerprint session does not cause AOD_HBM_ON to
-	 * be skipped (or AOD_HBM_OFF to be sent spuriously). */
-	oplus_hbm_status_reset();
 	if (oplus_display_get_hbm_mode())
 		__oplus_display_set_hbm(0);
 	set_oplus_display_power_status(OPLUS_DISPLAY_POWER_DOZE);
