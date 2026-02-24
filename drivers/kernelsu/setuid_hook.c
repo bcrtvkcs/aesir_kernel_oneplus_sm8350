@@ -241,6 +241,29 @@ void susfs_on_module_mounted(void)
 	susfs_try_setup_hosts_hide();
 }
 
+#ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
+static struct delayed_work susfs_resetprop_delayed_work;
+static bool susfs_resetprop_sanitize_done = false;
+
+extern int susfs_auto_sanitize_resetprop_traces(void);
+
+static void susfs_resetprop_sanitize_work_fn(struct work_struct *work)
+{
+	if (susfs_resetprop_sanitize_done)
+		return;
+	susfs_auto_sanitize_resetprop_traces();
+	susfs_resetprop_sanitize_done = true;
+}
+
+void susfs_schedule_resetprop_sanitize(void)
+{
+	if (susfs_resetprop_sanitize_done)
+		return;
+	INIT_DELAYED_WORK(&susfs_resetprop_delayed_work, susfs_resetprop_sanitize_work_fn);
+	schedule_delayed_work(&susfs_resetprop_delayed_work, msecs_to_jiffies(10000));
+}
+#endif // #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
+
 static inline bool is_zygote_isolated_service_uid(uid_t uid)
 {
 	uid %= 100000;

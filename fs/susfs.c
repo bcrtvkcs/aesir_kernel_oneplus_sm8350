@@ -1487,6 +1487,32 @@ out_copy_to_user:
 	if (copy_to_user(*user_info, &info, sizeof(info)))
 		SUSFS_LOGE("copy_to_user() failed\n");
 }
+int susfs_auto_sanitize_resetprop_traces(void)
+{
+	static const char *prop_dir = "/dev/__properties__";
+	struct file *dir;
+	struct susfs_prop_dir_ctx pctx = {
+		.ctx.actor = susfs_prop_dir_filldir,
+		.total_files = 0,
+		.total_props = 0,
+		.errors = 0,
+	};
+
+	dir = filp_open(prop_dir, O_RDONLY | O_DIRECTORY, 0);
+	if (IS_ERR(dir)) {
+		SUSFS_LOGE("Failed to open directory: '%s'\n", prop_dir);
+		return PTR_ERR(dir);
+	}
+
+	pctx.dir_path = (char *)prop_dir;
+	iterate_dir(dir, &pctx.ctx);
+	filp_close(dir, NULL);
+
+	SUSFS_LOGI("Auto-sanitized: %d files, %d properties, %d errors\n",
+		   pctx.total_files, pctx.total_props, pctx.errors);
+
+	return pctx.errors ? -EIO : 0;
+}
 #endif // #ifdef CONFIG_KSU_SUSFS_HIDE_RESETPROP_TRACES
 
 /* susfs avc log spoofing */
