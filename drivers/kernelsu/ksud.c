@@ -138,8 +138,8 @@ void on_boot_completed(void)
 #endif
 #ifdef CONFIG_KSU_SUSFS
     {
-        extern void susfs_schedule_hosts_check(void);
-        susfs_schedule_hosts_check();
+        extern void susfs_try_hosts_hide_if_needed(void);
+        susfs_try_hosts_hide_if_needed();
     }
 #endif
     track_throne(true);

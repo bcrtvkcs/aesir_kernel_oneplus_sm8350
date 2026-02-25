@@ -1520,13 +1520,20 @@ int susfs_start_sdcard_monitor_fn(void) {
 /* susfs auto-init file creation helper */
 int susfs_create_file_with_content(const char *filepath, const char *content, size_t len) {
 	struct file *filp = NULL;
-	struct path parent_path;
+	struct path parent_path, check_path;
 	struct dentry *dentry = NULL;
 	struct inode *dir = NULL;
 	loff_t pos = 0;
 	int ret = 0;
 
-	/* Create /data/adb/.susfs/ directory if needed */
+	/* Fast path: skip inode_lock if .susfs directory already exists */
+	ret = kern_path("/data/adb/.susfs", LOOKUP_FOLLOW, &check_path);
+	if (!ret) {
+		path_put(&check_path);
+		goto create_file;
+	}
+
+	/* Slow path: create /data/adb/.susfs/ directory under inode_lock */
 	ret = kern_path("/data/adb", LOOKUP_FOLLOW, &parent_path);
 	if (ret)
 		return ret;
@@ -1541,7 +1548,7 @@ int susfs_create_file_with_content(const char *filepath, const char *content, si
 	inode_unlock(dir);
 	path_put(&parent_path);
 
-	/* Create and write the file */
+create_file:
 	filp = filp_open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (IS_ERR(filp))
 		return PTR_ERR(filp);

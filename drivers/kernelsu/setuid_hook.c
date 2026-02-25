@@ -17,7 +17,6 @@
 #include <linux/namei.h>
 #include <linux/fs.h>
 #include <linux/stat.h>
-#include <linux/workqueue.h>
 #include <linux/vmalloc.h>
 #endif // #ifdef CONFIG_KSU_SUSFS
 
@@ -262,8 +261,7 @@ static const char susfs_clean_hosts_content[] =
 	"127.0.0.1       localhost\n"
 	"::1             ip6-localhost\n";
 
-static struct delayed_work susfs_hosts_delayed_work;
-static bool susfs_hosts_hide_done = false;
+static atomic_t susfs_hosts_hide_done = ATOMIC_INIT(0);
 
 static void susfs_try_setup_hosts_hide(void)
 {
@@ -271,21 +269,24 @@ static void susfs_try_setup_hosts_hide(void)
 	struct kstat kst;
 	int err;
 
-	if (susfs_hosts_hide_done)
+	/* Atomically claim ownership: prevents concurrent execution from
+	 * both on_module_mounted() and on_boot_completed() paths.
+	 */
+	if (atomic_cmpxchg(&susfs_hosts_hide_done, 0, 1) != 0)
 		return;
 
 	/* Check if hosts file is abnormally large (> 1KB means adblock list) */
 	err = kern_path("/system/etc/hosts", LOOKUP_FOLLOW, &p);
 	if (err)
-		return;
+		goto fail;
 
 	err = vfs_getattr(&p, &kst, STATX_SIZE, AT_STATX_SYNC_AS_STAT);
 	path_put(&p);
 	if (err)
-		return;
+		goto fail;
 
 	if (kst.size <= 1024)
-		return;
+		return; /* Not an adblock list, stay claimed so we don't retry */
 
 	/* 1. Create a clean hosts file for redirection */
 	err = susfs_create_file_with_content(
@@ -293,7 +294,7 @@ static void susfs_try_setup_hosts_hide(void)
 		susfs_clean_hosts_content,
 		sizeof(susfs_clean_hosts_content) - 1);
 	if (err)
-		return;
+		goto fail;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
 	/* 2. Spoof stat to show small file size */
@@ -310,20 +311,16 @@ static void susfs_try_setup_hosts_hide(void)
 		"/data/adb/.susfs/hosts_clean");
 #endif
 
-	susfs_hosts_hide_done = true;
+	return;
+
+fail:
+	/* Release ownership so the next caller can retry */
+	atomic_set(&susfs_hosts_hide_done, 0);
 }
 
-static void susfs_hosts_check_work_fn(struct work_struct *work)
+void susfs_try_hosts_hide_if_needed(void)
 {
 	susfs_try_setup_hosts_hide();
-}
-
-void susfs_schedule_hosts_check(void)
-{
-	if (susfs_hosts_hide_done)
-		return;
-	INIT_DELAYED_WORK(&susfs_hosts_delayed_work, susfs_hosts_check_work_fn);
-	schedule_delayed_work(&susfs_hosts_delayed_work, msecs_to_jiffies(30000));
 }
 
 void susfs_on_module_mounted(void)
