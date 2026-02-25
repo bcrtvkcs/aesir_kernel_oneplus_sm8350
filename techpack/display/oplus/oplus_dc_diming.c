@@ -484,6 +484,8 @@ EXPORT_SYMBOL(sde_connector_update_backlight);
 
 int fingerprint_wait_vsync(struct drm_encoder *drm_enc, struct dsi_panel *panel)
 {
+	int ret;
+
 	SDE_ATRACE_BEGIN("wait_vsync");
 
 	if (!drm_enc || !drm_enc->crtc || !panel) {
@@ -497,11 +499,15 @@ int fingerprint_wait_vsync(struct drm_encoder *drm_enc, struct dsi_panel *panel)
 	}
 
 	mutex_unlock(&panel->panel_lock);
-	sde_encoder_wait_for_event(drm_enc,  MSM_ENC_VBLANK);
+	ret = sde_encoder_wait_for_event(drm_enc, MSM_ENC_VBLANK);
 	mutex_lock(&panel->panel_lock);
+
+	if (ret)
+		SDE_ERROR("%s vsync wait timed out, ret=%d\n", __func__, ret);
+
 	SDE_ATRACE_END("wait_vsync");
 
-	return 0;
+	return ret;
 }
 
 extern struct dc_apollo_pcc_sync dc_apollo;
@@ -681,7 +687,8 @@ int sde_connector_update_hbm(struct drm_connector *connector)
 						rc = dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_HBM_ON);
 						SDE_ATRACE_END("DSI_CMD_HBM_ON");
 				} else if (!strcmp(dsi_display->panel->oplus_priv.vendor_name, "AMS662ZS01")) {
-					fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel);
+					if (fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel))
+						pr_warn("fingerprint vsync wait timeout before HBM ON\n");
 					rc = dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_HBM_ON);
 				} else {
 					rc = dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_AOD_HBM_ON);
@@ -825,7 +832,8 @@ int sde_connector_update_hbm(struct drm_connector *connector)
 						}
 						else {
 							dsi_panel_seed_mode(dsi_display->panel, seed_mode);
-							fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel);
+							if (fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel))
+								pr_warn("fingerprint vsync wait timeout before HBM OFF\n");
 							rc = dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_HBM_OFF);
 							oplus_panel_update_backlight_unlock(panel);
 						}
@@ -869,7 +877,8 @@ int sde_connector_update_hbm(struct drm_connector *connector)
 					(!strcmp(panel->oplus_priv.vendor_name, "AMS643YE01"))) {
 					if ((!strcmp(panel->oplus_priv.vendor_name, "S6E3HC3")) ||
 						(!strcmp(panel->oplus_priv.vendor_name, "AMB670YF01"))) {
-							fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel);
+							if (fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel))
+								pr_warn("fingerprint vsync wait timeout before HBM AOR restore\n");
 					}
 					dsi_panel_seed_mode(dsi_display->panel, seed_mode);
 					dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_HBM_AOR_RESTORE);
@@ -884,7 +893,8 @@ int sde_connector_update_hbm(struct drm_connector *connector)
 						oplus_panel_update_backlight_unlock(panel);
 					} else {
 						dsi_panel_seed_mode(dsi_display->panel, seed_mode);
-						fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel);
+						if (fingerprint_wait_vsync(c_conn->encoder, dsi_display->panel))
+							pr_warn("fingerprint vsync wait timeout before HBM OFF\n");
 						rc = dsi_panel_tx_cmd_set(dsi_display->panel, DSI_CMD_HBM_OFF);
 						if (enable_global_hbm_flags)
 							enable_global_hbm_flags = 0;
