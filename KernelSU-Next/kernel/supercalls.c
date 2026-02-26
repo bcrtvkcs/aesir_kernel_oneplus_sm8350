@@ -1025,19 +1025,25 @@ void ksu_supercalls_init(void)
                 ksu_ioctl_handlers[i].cmd);
     }
 
+#ifndef CONFIG_KSU_SUSFS
 	int rc = register_kprobe(&reboot_kp);
 	if (rc) {
 		pr_err("reboot kprobe failed: %d\n", rc);
 	} else {
 		pr_info("reboot kprobe registered successfully\n");
 	}
+#endif // #ifndef CONFIG_KSU_SUSFS
 
     sulog_init_heap(); // grab heap memory
 }
 
 void ksu_supercalls_exit(void)
 {
+#ifndef CONFIG_KSU_SUSFS
     unregister_kprobe(&reboot_kp);
+#else
+    pr_info("susfs: do nothing\n");
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
 
 // IOCTL dispatcher

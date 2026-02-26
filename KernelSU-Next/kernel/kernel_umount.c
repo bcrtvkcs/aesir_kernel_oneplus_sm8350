@@ -91,6 +91,11 @@ static void umount_tw_func(struct callback_head *cb)
     }
     up_read(&mount_list_lock);
 
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+    // susfs_run_sus_path_loop() runs here with ksu_cred so that it can reach all the paths
+    susfs_run_sus_path_loop();
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
+
 	revert_creds(saved);
 
 	kfree(tw);
@@ -137,6 +142,8 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
 		pr_info("handle umount ignore non zygote child: %d\n", current->pid);
 		return 0;
 	}
+#endif // #ifndef CONFIG_KSU_SUSFS
+
 	// umount the target mnt
 	pr_info("handle umount for uid: %d, pid: %d\n", new_uid, current->pid);
 

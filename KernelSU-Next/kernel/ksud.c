@@ -286,6 +286,11 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 		}
 	}
 
+#ifdef CONFIG_KSU_SUSFS
+	// - We need to run ksu_handle_execveat_init() at the very end in case the above checks are skipped
+	(void)ksu_handle_execveat_init(filename);
+#endif // #ifdef CONFIG_KSU_SUSFS
+
 	return 0;
 }
 
@@ -472,6 +477,12 @@ static bool is_volumedown_enough(unsigned int count)
 int ksu_handle_input_handle_event(unsigned int *type, unsigned int *code,
 					int *value)
 {
+#ifdef CONFIG_KSU_SUSFS
+	if (!ksu_input_hook) {
+		return 0;
+	}
+#endif // #ifdef CONFIG_KSU_SUSFS
+
 	if (*type == EV_KEY && *code == KEY_VOLUMEDOWN) {
 		int val = *value;
 		pr_info("KEY_VOLUMEDOWN val: %d\n", val);
@@ -644,17 +655,28 @@ static void do_stop_input_hook(struct work_struct *work)
 {
 	unregister_kprobe(&input_event_kp);
 }
+#endif // #ifndef CONFIG_KSU_SUSFS
 
 static void stop_init_rc_hook()
 {
+#ifndef CONFIG_KSU_SUSFS
 	bool ret = schedule_work(&stop_init_rc_hook_work);
 	pr_info("unregister init_rc_hook kprobe: %d!\n", ret);
+#else
+	ksu_init_rc_hook = false;
+	pr_info("stop init_rc_hook\n");
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
 
 static void stop_execve_hook()
 {
+#ifndef CONFIG_KSU_SUSFS
 	bool ret = schedule_work(&stop_execve_hook_work);
 	pr_info("unregister execve kprobe: %d!\n", ret);
+#else
+	ksu_execveat_hook = false;
+	pr_info("stop execve_hook\n");
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
 
 static void stop_input_hook()
@@ -664,13 +686,19 @@ static void stop_input_hook()
 		return;
 	}
 	input_hook_stopped = true;
+#ifndef CONFIG_KSU_SUSFS
 	bool ret = schedule_work(&stop_input_hook_work);
 	pr_info("unregister input kprobe: %d!\n", ret);
+#else
+	ksu_input_hook = false;
+	pr_info("stop input_hook\n");
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
 
 // ksud: module support
 void ksu_ksud_init()
 {
+#ifndef CONFIG_KSU_SUSFS
 	int ret;
 
 	ret = register_kprobe(&execve_kp);
@@ -688,12 +716,15 @@ void ksu_ksud_init()
 	INIT_WORK(&stop_init_rc_hook_work, do_stop_init_rc_hook);
 	INIT_WORK(&stop_execve_hook_work, do_stop_execve_hook);
 	INIT_WORK(&stop_input_hook_work, do_stop_input_hook);
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
 
 void ksu_ksud_exit()
 {
+#ifndef CONFIG_KSU_SUSFS
 	unregister_kprobe(&execve_kp);
 	// this should be done before unregister sys_read_kp
 	// unregister_kprobe(&sys_read_kp);
 	unregister_kprobe(&input_event_kp);
+#endif // #ifndef CONFIG_KSU_SUSFS
 }
