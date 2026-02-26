@@ -280,7 +280,7 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 	return 0;
 }
 
-#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+#if defined(CONFIG_HAVE_SYSCALL_TRACEPOINTS) && !defined(CONFIG_KSU_SUSFS)
 // Generic sys_enter handler that dispatches to specific handlers
 static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 {
@@ -345,7 +345,7 @@ void ksu_syscall_hook_manager_init(void)
         init_kretprobe("syscall_unregfunc", syscall_unregfunc_handler);
 #endif
 
-#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+#if defined(CONFIG_HAVE_SYSCALL_TRACEPOINTS) && !defined(CONFIG_KSU_SUSFS)
     ret = register_trace_sys_enter(ksu_sys_enter_handler, NULL);
 #ifndef CONFIG_KRETPROBES
     ksu_mark_running_process_locked();
@@ -366,7 +366,7 @@ void ksu_syscall_hook_manager_init(void)
 void ksu_syscall_hook_manager_exit(void)
 {
     pr_info("hook_manager: ksu_hook_manager_exit called\n");
-#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+#if defined(CONFIG_HAVE_SYSCALL_TRACEPOINTS) && !defined(CONFIG_KSU_SUSFS)
     unregister_trace_sys_enter(ksu_sys_enter_handler, NULL);
     tracepoint_synchronize_unregister();
     pr_info("hook_manager: sys_enter tracepoint unregistered\n");
