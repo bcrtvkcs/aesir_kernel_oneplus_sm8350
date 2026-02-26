@@ -10,8 +10,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Wysiwyg
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.AttachMoney
@@ -38,9 +41,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import com.rifsxd.ksunext.ui.LocalScrollState
+import com.rifsxd.ksunext.ui.rememberScrollConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -48,6 +55,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -58,6 +66,7 @@ import com.dergoogler.mmrl.ui.component.LabelItem
 import com.dergoogler.mmrl.ui.component.LabelItemDefaults
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.ModuleRepoScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.ExecuteModuleActionScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.FlashScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -69,6 +78,8 @@ import com.rifsxd.ksunext.ui.component.ConfirmResult
 import com.rifsxd.ksunext.ui.component.SearchAppBar
 import com.rifsxd.ksunext.ui.component.rememberConfirmDialog
 import com.rifsxd.ksunext.ui.component.rememberLoadingDialog
+import com.rifsxd.ksunext.ui.component.ShortcutDialog
+import com.rifsxd.ksunext.ui.util.module.Shortcut
 import com.rifsxd.ksunext.ui.util.*
 import com.rifsxd.ksunext.ui.viewmodel.ModuleViewModel
 import com.rifsxd.ksunext.ui.webui.WebUIActivity
@@ -117,54 +128,77 @@ fun ModuleScreen(navigator: DestinationsNavigator) {
         contract = ActivityResultContracts.StartActivityForResult()
     ) { viewModel.fetchModuleList() }
 
-    val listState = rememberLazyListState()
-    var showFab by remember { mutableStateOf(true) }
+    val selectZipLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            return@rememberLauncherForActivityResult
+        }
+        val data = result.data ?: return@rememberLauncherForActivityResult
+        val clipData = data.clipData
 
-    LaunchedEffect(listState) {
-        var lastIndex = listState.firstVisibleItemIndex
-        var lastOffset = listState.firstVisibleItemScrollOffset
-
-        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
-            .collect { (currIndex, currOffset) ->
-                val isScrollingDown = currIndex > lastIndex ||
-                    (currIndex == lastIndex && currOffset > lastOffset + 4)
-                val isScrollingUp = currIndex < lastIndex ||
-                    (currIndex == lastIndex && currOffset < lastOffset - 4)
-
-                when {
-                    isScrollingDown && showFab -> showFab = false
-                    isScrollingUp && !showFab -> showFab = true
-                }
-
-                lastIndex = currIndex
-                lastOffset = currOffset
+        val uris = mutableListOf<Uri>()
+        if (clipData != null) {
+            for (i in 0 until clipData.itemCount) {
+                clipData.getItemAt(i)?.uri?.let { uris.add(it) }
             }
+        } else {
+            data.data?.let { uris.add(it) }
+        }
+
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+
+        viewModel.updateZipUris(uris)
+
+        navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(uris)))
+        viewModel.clearZipUris()
+        viewModel.markNeedRefresh()
     }
 
-    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val listState = rememberLazyListState()
+
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 112.dp
 
     Scaffold(
         topBar = {
             SearchAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = dropUnlessResumed { navigator.popBackStack() }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null
-                            )
-                        }
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.module),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.module),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                    )
                 },
                 searchText = viewModel.search,
                 onSearchTextChange = { viewModel.search = it },
                 onClearClick = { viewModel.search = "" },
+                actionsContent = {
+                    IconButton(
+                        onClick = { navigator.navigate(ModuleRepoScreenDestination) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Cloud,
+                            contentDescription = stringResource(id = R.string.module_repo_screen)
+                        )
+                    }
+
+                    if (!hideInstallButton) {
+                        IconButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
+                                    type = "application/zip"
+                                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                                }
+                                selectZipLauncher.launch(intent)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = stringResource(id = R.string.module_install)
+                            )
+                        }
+                    }
+                },
                 dropdownContent = {
                     var showDropdown by remember { mutableStateOf(false) }
                     IconButton(
@@ -392,68 +426,7 @@ fun ModuleScreen(navigator: DestinationsNavigator) {
                 scrollBehavior = scrollBehavior
             )
         },
-        floatingActionButton = {
-            if (!hideInstallButton) {
-                AnimatedVisibility(
-                    visible = showFab,
-                    enter = scaleIn(
-                        animationSpec = tween(200),
-                        initialScale = 0.8f
-                    ) + fadeIn(animationSpec = tween(400)),
-                    exit = scaleOut(
-                        animationSpec = tween(200),
-                        targetScale = 0.8f
-                    ) + fadeOut(animationSpec = tween(400))
-                ) {
-                    val moduleInstall = stringResource(id = R.string.module_install)
-                    val selectZipLauncher = rememberLauncherForActivityResult(
-                        contract = ActivityResultContracts.StartActivityForResult()
-                    ) { result ->
-                        if (result.resultCode != RESULT_OK) {
-                            return@rememberLauncherForActivityResult
-                        }
-                        val data = result.data ?: return@rememberLauncherForActivityResult
-                        val clipData = data.clipData
-
-                        val uris = mutableListOf<Uri>()
-                        if (clipData != null) {
-                            for (i in 0 until clipData.itemCount) {
-                                clipData.getItemAt(i)?.uri?.let { uris.add(it) }
-                            }
-                        } else {
-                            data.data?.let { uris.add(it) }
-                        }
-
-                        if (uris.isEmpty()) return@rememberLauncherForActivityResult
-
-                        viewModel.updateZipUris(uris)
-
-                        navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(uris)))
-                        viewModel.clearZipUris()
-                        viewModel.markNeedRefresh()
-                    }
-
-                    Box(
-                        modifier = Modifier.padding(
-                            bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-                        )
-                    ) {
-                        ExtendedFloatingActionButton(
-                            onClick = {
-                                // Select the zip files to install
-                                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                                    type = "application/zip"
-                                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
-                                }
-                                selectZipLauncher.launch(intent)
-                            },
-                            icon = { Icon(Icons.Filled.Add, moduleInstall) },
-                            text = { Text(text = moduleInstall) },
-                        )
-                    }
-                }
-            }
-        },
+        floatingActionButton = {},
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         snackbarHost = {
             SnackbarHost(
@@ -479,10 +452,30 @@ fun ModuleScreen(navigator: DestinationsNavigator) {
             }
 
             else -> {
+                // Bottom bar scroll tracking
+                val bottomBarScrollState = LocalScrollState.current
+                val bottomBarScrollConnection = if (bottomBarScrollState != null) {
+                    rememberScrollConnection(
+                        isScrollingDown = bottomBarScrollState.isScrollingDown,
+                        scrollOffset = bottomBarScrollState.scrollOffset,
+                        previousScrollOffset = bottomBarScrollState.previousScrollOffset,
+                        threshold = 30f
+                    )
+                } else null
+
                 ModuleList(
                     navigator,
                     viewModel = viewModel,
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                    modifier = Modifier
+                        .let { modifier ->
+                            if (bottomBarScrollConnection != null) {
+                                modifier
+                                    .nestedScroll(bottomBarScrollConnection)
+                                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+                            } else {
+                                modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                            }
+                        },
                     boxModifier = Modifier.padding(innerPadding),
                     onInstallModule = {
                         navigator.navigate(FlashScreenDestination(FlashIt.FlashModules(listOf(it))))
@@ -689,13 +682,12 @@ private fun ModuleList(
             viewModel.fetchModuleList()
         }
     ) {
-        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+        val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 112.dp
 
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState()).nestedScrollConnection),
+            modifier = modifier
+                .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = remember {
                 PaddingValues(
@@ -795,6 +787,7 @@ private fun ModuleList(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ModuleItem(
     navigator: DestinationsNavigator,
@@ -809,13 +802,152 @@ fun ModuleItem(
     onExpandToggle: () -> Unit,
 ) {
     val viewModel = viewModel<ModuleViewModel>()
+    var showMenu by remember { mutableStateOf(false) }
+    var showShortcutDialog by remember { mutableStateOf(false) }
+    var shortcutType by remember { mutableStateOf("") }
+    var dialogInitialIcon by remember { mutableStateOf<String?>(null) }
+
+    fun normalizeIconPath(p: String?): String? {
+        if (p.isNullOrBlank()) return null
+
+        try {
+            val candidate = "/data/adb/modules/${module.id}/$p"
+            val f = SuFile(candidate)
+            if (f.exists()) return "su://$candidate"
+        } catch (_: Exception) {
+        }
+
+        if (p.startsWith("/")) {
+            try {
+                val f = SuFile(p)
+                if (f.exists()) return "su://$p"
+            } catch (_: Exception) {
+            }
+            return "file://$p"
+        }
+
+        return p
+    }
+    
+    val haptic = LocalHapticFeedback.current
+
+    val context = LocalContext.current
+
+    if (showShortcutDialog) {
+        ShortcutDialog(
+            initialName = module.name,
+            initialIconUri = dialogInitialIcon,
+            onDismiss = { showShortcutDialog = false },
+            onConfirm = { name, iconUri ->
+                showShortcutDialog = false
+                if (shortcutType == "action") {
+                    Shortcut.createModuleActionShortcut(context, module.id, name, iconUri)
+                } else if (shortcutType == "webui") {
+                    Shortcut.createModuleWebUiShortcut(context, module.id, name, iconUri)
+                }
+            }
+        )
+    }
+
+    if (module.hasWebUi || module.hasActionScript) {
+        if (showMenu) {
+            Dialog(
+                onDismissRequest = { showMenu = false }
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(0.95f),
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        Text(
+                            text = stringResource(R.string.module_shortcut),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        // Stacked buttons: top (WebUI) and bottom (Action)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (module.hasWebUi) {
+                                FilledTonalButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+                                        showMenu = false
+                                        shortcutType = "webui"
+                                        dialogInitialIcon = normalizeIconPath(module.webUiIconPath)
+                                        showShortcutDialog = true
+                                    },
+                                    contentPadding = ButtonDefaults.TextButtonContentPadding
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.size(20.dp),
+                                        imageVector = Icons.AutoMirrored.Outlined.Wysiwyg,
+                                        contentDescription = null
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        text = stringResource(R.string.create_webui_shortcut),
+                                        fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
+                                        fontSize = MaterialTheme.typography.labelMedium.fontSize
+                                    )
+                                }
+                            }
+
+                            if (module.hasActionScript) {
+                                FilledTonalButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = {
+                                        showMenu = false
+                                        shortcutType = "action"
+                                        dialogInitialIcon = normalizeIconPath(module.actionIconPath)
+                                        showShortcutDialog = true
+                                    },
+                                    contentPadding = ButtonDefaults.TextButtonContentPadding
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.size(20.dp),
+                                        imageVector = Icons.Outlined.Terminal,
+                                        contentDescription = null
+                                    )
+                                    Text(
+                                        modifier = Modifier.padding(start = 8.dp),
+                                        text = stringResource(R.string.create_action_shortcut),
+                                        fontFamily = MaterialTheme.typography.labelMedium.fontFamily,
+                                        fontSize = MaterialTheme.typography.labelMedium.fontSize
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            TextButton(onClick = { showMenu = false }) {
+                                Text(stringResource(R.string.cancel))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .clickable(
-                onClick = onExpandToggle
+            .combinedClickable(
+                onClick = onExpandToggle,
+                onLongClick = {
+                    showMenu = true
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
             )
     ) {
         Box(
@@ -823,6 +955,7 @@ fun ModuleItem(
                 .fillMaxWidth()
         ) {
             val context = LocalContext.current
+
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
             val useBanner = prefs.getBoolean("use_banner", true)
@@ -849,7 +982,7 @@ fun ModuleItem(
                         .matchParentSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (module.banner.startsWith("https", true) || module.banner.startsWith("http", true)) {
+                    if (module.banner.startsWith("http", true)) {
                         AsyncImage(
                             model = module.banner,
                             contentDescription = null,
@@ -863,10 +996,17 @@ fun ModuleItem(
                         val bannerData = remember(module.banner) {
                             try {
                                 val file = SuFile("/data/adb/modules/${module.id}/${module.banner}")
-                                file.newInputStream().use { it.readBytes() }
+                                return@remember file.newInputStream().use { it.readBytes() }
                             } catch (_: Exception) {
-                                null
                             }
+
+                            try {
+                                val file = SuFile("/data/adb/modules_update/${module.id}/${module.banner}")
+                                return@remember file.newInputStream().use { it.readBytes() }
+                            } catch (_: Exception) {
+                            }
+
+                            null
                         }
                         if (bannerData != null) {
                             AsyncImage(
@@ -941,11 +1081,7 @@ fun ModuleItem(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 LabelItem(
-                                    text = formatSize(module.size),
-                                    style = LabelItemDefaults.style.copy(
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                    )
+                                    text = formatSize(module.size)
                                 )
                                 if (module.remove) {
                                     LabelItem(
@@ -955,6 +1091,35 @@ fun ModuleItem(
                                             contentColor = MaterialTheme.colorScheme.onErrorContainer
                                         )
                                     )
+                                }
+                                if (!Natives.isZygiskEnabled() && module.zygiskRequired && !module.remove) {
+                                    LabelItem(
+                                        text = stringResource(R.string.zygisk_required),
+                                        style = LabelItemDefaults.style.copy(
+                                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    )
+                                }
+                                if (updateUrl.isNotEmpty() && !module.remove && !module.update) {
+                                    LabelItem(
+                                        text = stringResource(R.string.module_update_available),
+                                        style = LabelItemDefaults.style.copy(
+                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                        )
+                                    )
+                                }
+                                if (!module.remove) {
+                                    if (module.update) {
+                                        LabelItem(
+                                            text = stringResource(R.string.module_updated),
+                                            style = LabelItemDefaults.style.copy(
+                                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                            )
+                                        )
+                                    }
                                 }
                                 if (module.isMetaModule && !module.remove) {
                                     LabelItem(
@@ -974,42 +1139,13 @@ fun ModuleItem(
                                         )
                                     )
                                 }
-                                if (!Natives.isZygiskEnabled() && module.zygiskRequired && !module.remove) {
-                                    LabelItem(
-                                        text = stringResource(R.string.zygisk_required),
-                                        style = LabelItemDefaults.style.copy(
-                                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                                            contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                        )
-                                    )
-                                }
-                                if (updateUrl.isNotEmpty() && !module.remove && !module.update) {
-                                    LabelItem(
-                                        text = stringResource(R.string.module_update_available),
-                                        style = LabelItemDefaults.style.copy(
-                                            containerColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                            contentColor = MaterialTheme.colorScheme.tertiaryContainer
-                                        )
-                                    )
-                                }
-                                if (!module.remove) {
-                                    if (module.update) {
-                                        LabelItem(
-                                            text = stringResource(R.string.module_updated),
-                                            style = LabelItemDefaults.style.copy(
-                                                containerColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.tertiaryContainer
-                                            )
-                                        )
-                                    }
-                                }
                                 if (module.enabled && !module.remove) {
                                     if (module.hasWebUi && filterZygiskModules) {
                                         LabelItem(
                                             text = stringResource(R.string.webui),
                                             style = LabelItemDefaults.style.copy(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                             )
                                         )
                                     }
@@ -1320,7 +1456,20 @@ fun ModuleItemPreview() {
         banner = "",
         zygiskRequired = false,
         isMetaModule = false,
+        actionIconPath = null,
+        webUiIconPath = null,
         donate = ""
     )
-    ModuleItem(EmptyDestinationsNavigator, module, "", {}, {}, {}, {}, {}, false, {})
+    ModuleItem(
+        EmptyDestinationsNavigator,
+        module,
+        "",
+        {},
+        {},
+        {},
+        {},
+        {},
+        false,
+        {}
+    )
 }

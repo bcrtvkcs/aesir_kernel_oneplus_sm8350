@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
 import android.util.Base64
+import android.util.Log
 import android.view.Window
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -30,10 +31,16 @@ import com.topjohnwu.superuser.internal.UiThreadHandler
 import com.topjohnwu.superuser.io.SuFile
 import com.topjohnwu.superuser.io.SuFileInputStream
 import com.topjohnwu.superuser.io.SuFileOutputStream
+import com.rifsxd.ksunext.ui.util.module.Shortcut
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedOutputStream
 import java.io.File
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
+
+const val TAG = "WebViewInterface"
 
 @Suppress("unused")
 class WebViewInterface(
@@ -218,6 +225,48 @@ class WebViewInterface(
             break
         }
         return currentModuleInfo.toString()
+    }
+
+    @JavascriptInterface
+    fun createShortcut(): Boolean {
+        return try {
+            val moduleId = File(modDir).name
+
+            val infoJson = JSONObject(moduleInfo())
+            val moduleName = infoJson.optString("name", moduleId)
+            val webuiIcon = infoJson.optString("webuiIcon").takeIf { it.isNotBlank() }
+
+            fun resolveIcon(p: String?): String? {
+                if (p.isNullOrBlank()) return null
+
+                try {
+                    val candidate = "/data/adb/modules/$moduleId/$p"
+                    val f = SuFile(candidate)
+                    if (f.exists()) return "su://$candidate"
+                } catch (_: Exception) {
+                }
+
+                if (p.startsWith("/")) {
+                    try {
+                        val f = SuFile(p)
+                        if (f.exists()) return "su://$p"
+                    } catch (_: Exception) {
+                    }
+                    return "file://$p"
+                }
+
+                return p
+            }
+
+            val resolved = resolveIcon(webuiIcon)
+
+            Handler(Looper.getMainLooper()).post {
+                Shortcut.createModuleWebUiShortcut(context, moduleId, moduleName, resolved)
+            }
+            true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     @JavascriptInterface
@@ -409,6 +458,101 @@ class WebViewInterface(
         } catch (e: Exception) {
             false
         }
+    }
+
+    val fileOutputStream = FileOutputStreamInterface()
+
+    @JavascriptInterface
+    fun fileOutputStream(): FileOutputStreamInterface {
+        return fileOutputStream
+    }
+
+    fun destroy() {
+        fileOutputStream.closeAll()
+    }
+}
+
+class FileOutputStreamInterface {
+    private val openStreams = ConcurrentHashMap<String, BufferedOutputStream>()
+
+    @JavascriptInterface
+    fun open(path: String, append: Boolean): String {
+        return try {
+            val file = SuFile(path)
+            val fos = SuFileOutputStream.open(file, append)
+            val bos = BufferedOutputStream(fos, 64 * 1024)
+            val id = UUID.randomUUID().toString()
+            openStreams[id] = bos
+            id
+        } catch (e: Exception) {
+            Log.e(TAG, "open failed", e)
+            ""
+        }
+    }
+
+    @JavascriptInterface
+    fun open(path: String): String {
+        return open(path, false)
+    }
+
+    @JavascriptInterface
+    fun writeByte(id: String, b: Int): Boolean {
+        return runCatching {
+            val bos = openStreams[id] ?: return false
+            synchronized(bos) { bos.write(b) }
+            true
+        }.getOrElse {
+            Log.e(TAG, "writeByte failed", it)
+            false
+        }
+    }
+
+    @JavascriptInterface
+    fun write(id: String, base64: String): Boolean {
+        return runCatching {
+            val bos = openStreams[id] ?: return false
+            val data = Base64.decode(base64, Base64.NO_WRAP)
+            synchronized(bos) { bos.write(data) }
+            true
+        }.getOrElse {
+            Log.e(TAG, "write failed", it)
+            false
+        }
+    }
+
+    @JavascriptInterface
+    fun flush(id: String): Boolean {
+        return runCatching {
+            val bos = openStreams[id] ?: return false
+            synchronized(bos) { bos.flush() }
+            true
+        }.getOrElse {
+            Log.e(TAG, "flush failed", it)
+            false
+        }
+    }
+
+    @JavascriptInterface
+    fun close(id: String): Boolean {
+        val bos = openStreams.remove(id) ?: return false
+        return runCatching {
+            synchronized(bos) { bos.close() }
+            true
+        }.getOrElse {
+            Log.e(TAG, "close failed", it)
+            false
+        }
+    }
+
+    fun closeAll() {
+        openStreams.forEach { (id, bos) ->
+            runCatching {
+                synchronized(bos) { bos.close() }
+            }.onFailure {
+                Log.e(TAG, "closeAll failed for $id", it)
+            }
+        }
+        openStreams.clear()
     }
 }
 

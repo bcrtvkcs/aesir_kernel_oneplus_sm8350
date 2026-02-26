@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import com.rifsxd.ksunext.ui.LocalScrollState
+import com.rifsxd.ksunext.ui.rememberScrollConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
@@ -74,16 +76,27 @@ fun SettingScreen(navigator: DestinationsNavigator) {
     val isManager = Natives.isManager
     val ksuVersion = if (isManager) Natives.version else null
 
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 112.dp
+
     Scaffold(
         topBar = {
             TopBar(
-                onBack = dropUnlessResumed { navigator.popBackStack() },
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(snackBarHost) },
+        snackbarHost = { SnackbarHost(snackBarHost, modifier = Modifier.padding(bottom = navBarPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { paddingValues ->
+        // Bottom bar scroll tracking
+        val bottomBarScrollState = LocalScrollState.current
+        val bottomBarScrollConnection = if (bottomBarScrollState != null) {
+            rememberScrollConnection(
+                isScrollingDown = bottomBarScrollState.isScrollingDown,
+                scrollOffset = bottomBarScrollState.scrollOffset,
+                previousScrollOffset = bottomBarScrollState.previousScrollOffset,
+                threshold = 30f
+            )
+        } else null
         val aboutDialog = rememberCustomDialog {
             AboutDialog(it)
         }
@@ -92,9 +105,20 @@ fun SettingScreen(navigator: DestinationsNavigator) {
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .let { modifier ->
+                    if (bottomBarScrollConnection != null) {
+                        modifier
+                            .nestedScroll(bottomBarScrollConnection)
+                            .nestedScroll(scrollBehavior.nestedScrollConnection)
+                    } else {
+                        modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                    }
+                }
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding())
+                .padding(top = 16.dp)
+                .padding(bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 116.dp)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
             val context = LocalContext.current
@@ -137,7 +161,6 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
@@ -178,7 +201,10 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                             ) { checked ->
                                 val shouldEnable = !checked
+                                val prefsLocal = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
                                 if (Natives.setSuEnabled(shouldEnable)) {
+                                    execKsud("feature save", true)
+                                    prefsLocal.edit { putInt("su_compat_mode", if (shouldEnable) 0 else 2) }
                                     isSuDisabled = !shouldEnable
                                 }
                             }
@@ -199,7 +225,10 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                             ) { checked ->
                                 val shouldEnable = !checked
+                                val prefsLocal = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
                                 if (Natives.setKernelUmountEnabled(shouldEnable)) {
+                                    execKsud("feature save", true)
+                                    prefsLocal.edit { putInt("kernel_umount_mode", if (shouldEnable) 0 else 2) }
                                     isKernelUmountDisabled = !shouldEnable
                                 }
                             }
@@ -221,7 +250,10 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                             ) { checked ->
                                 val shouldEnable = !checked
+                                val prefsLocal = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
                                 if (Natives.setAvcSpoofEnabled(shouldEnable)) {
+                                    execKsud("feature save", true)
+                                    prefsLocal.edit { putInt("avc_spoof_mode", if (shouldEnable) 0 else 2) }
                                     isAvcSpoofDisabled = !shouldEnable
                                 }
                             }
@@ -232,12 +264,32 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp),
                 ) {
                     Column(
                         modifier = Modifier.padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+
+                        var isSelinuxPermissive by rememberSaveable {
+                            mutableStateOf(getSelinuxEnforce() == false)
+                        }
+
+                        SwitchItem(
+                            icon = Icons.Filled.Security,
+                            title = stringResource(R.string.set_selinux),
+                            summary = stringResource(R.string.set_selinux_summary),
+                            checked = isSelinuxPermissive,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp)),
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+                        ) { checked ->
+                            val shouldEnforce = !checked
+                            if (setSelinuxEnforce(shouldEnforce)) {
+                                isSelinuxPermissive = !shouldEnforce
+                            }
+                        }
+
                         ListItem(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -286,26 +338,6 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
                                 .clickable {
-                                    navigator.navigate(MetaModuleInstallScreenDestination)
-                                },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                            leadingContent = {
-                                Icon(Icons.Filled.Cloud, null)
-                            },
-                            headlineContent = {
-                                Text(
-                                    text = stringResource(R.string.meta_module_screen),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            }
-                        )
-
-                        ListItem(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable {
                                     navigator.navigate(DeveloperScreenDestination)
                                 },
                             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -333,15 +365,13 @@ fun SettingScreen(navigator: DestinationsNavigator) {
                     }
                 }
 
-                Spacer(Modifier.height(2.dp))
+                
             }
 
             val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),
@@ -651,19 +681,14 @@ fun rememberUninstallDialog(onSelected: (UninstallType) -> Unit): DialogHandle {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(
-    onBack: () -> Unit = {},
     scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     TopAppBar(
         title = { Text(
-                text = stringResource(R.string.settings),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Black,
-            ) }, navigationIcon = {
-            IconButton(
-                onClick = onBack
-            ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
-        },
+            text = stringResource(R.string.settings),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Black,
+        ) },
         windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
         scrollBehavior = scrollBehavior
     )

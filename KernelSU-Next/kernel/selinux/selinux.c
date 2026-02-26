@@ -51,9 +51,9 @@ static int transive_to_domain(const char *domain, struct cred *cred)
     return error;
 }
 
-void setup_selinux(const char *domain)
+void setup_selinux(const char *domain, struct cred *cred)
 {
-    if (transive_to_domain(domain, (struct cred *)__task_cred(current))) {
+    if (transive_to_domain(domain, cred)) {
         pr_err("transive domain failed.\n");
         return;
     }
@@ -221,7 +221,7 @@ u32 susfs_priv_app_sid = 0;
 static inline void susfs_set_sid(const char *secctx_name, u32 *out_sid)
 {
     int err;
-    
+
     if (!secctx_name || !out_sid) {
         pr_err("secctx_name || out_sid is NULL\n");
         return;
@@ -253,7 +253,7 @@ u32 susfs_get_sid_from_name(const char *secctx_name)
 {
     u32 out_sid = 0;
     int err;
-    
+
     if (!secctx_name) {
         pr_err("secctx_name is NULL\n");
         return 0;

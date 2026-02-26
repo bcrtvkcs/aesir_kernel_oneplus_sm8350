@@ -1,7 +1,6 @@
 #include <linux/rcupdate.h>
 #include <linux/slab.h>
 #include <linux/task_work.h>
-#include <linux/sched/task.h>
 #include <asm/current.h>
 #include <linux/compat.h>
 #include <linux/cred.h>
@@ -279,7 +278,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 			struct task_struct *init_task =
 				rcu_dereference(current->real_parent);
 			if (init_task)
-				task_work_add(init_task, &on_post_fs_data_cb, true);
+				task_work_add(init_task, &on_post_fs_data_cb, TWA_RESUME);
 			rcu_read_unlock();
 			first_zygote = false;
 			stop_execve_hook();
@@ -449,23 +448,6 @@ void ksu_handle_sys_read(unsigned int fd)
 skip:
 	fput(file);
 }
-
-#ifdef CONFIG_KSU_SUSFS
-void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr) {
-	loff_t new_size = *kstat_size_ptr + ksu_rc_len;
-	struct file *file = fget(fd);
-
-	if (!file)
-		return;
-
-	if (is_init_rc(file)) {
-		pr_info("stat init.rc");
-		pr_info("adding ksu_rc_len: %lld -> %lld", *kstat_size_ptr, new_size);
-		*kstat_size_ptr = new_size;
-	}
-	fput(file);
-}
-#endif // #ifdef CONFIG_KSU_SUSFS
 
 static unsigned int volumedown_pressed_count = 0;
 
@@ -656,6 +638,23 @@ static void do_stop_input_hook(struct work_struct *work)
 	unregister_kprobe(&input_event_kp);
 }
 #endif // #ifndef CONFIG_KSU_SUSFS
+
+#ifdef CONFIG_KSU_SUSFS
+void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr) {
+	loff_t new_size = *kstat_size_ptr + ksu_rc_len;
+	struct file *file = fget(fd);
+
+	if (!file)
+		return;
+
+	if (is_init_rc(file)) {
+		pr_info("stat init.rc");
+		pr_info("adding ksu_rc_len: %lld -> %lld", *kstat_size_ptr, new_size);
+		*kstat_size_ptr = new_size;
+	}
+	fput(file);
+}
+#endif // #ifdef CONFIG_KSU_SUSFS
 
 static void stop_init_rc_hook()
 {

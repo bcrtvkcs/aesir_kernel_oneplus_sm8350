@@ -2,7 +2,6 @@
 #include <linux/version.h>
 #include <linux/slab.h>
 #include <linux/task_work.h>
-#include <linux/sched/task.h>
 #include <linux/thread_info.h>
 #include <linux/seccomp.h>
 #include <linux/printk.h>
@@ -42,6 +41,12 @@ static inline bool is_zygote_normal_app_uid(uid_t uid)
 }
 
 extern u32 susfs_zygote_sid;
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+extern void susfs_run_sus_path_loop(uid_t uid);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern void susfs_reorder_mnt_id(void);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #endif // #ifdef CONFIG_KSU_SUSFS
 
 static void ksu_install_manager_fd_tw_func(struct callback_head *cb)
@@ -71,7 +76,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid)
         if (!cb)
             return 0;
         cb->func = ksu_install_manager_fd_tw_func;
-        if (task_work_add(current, cb, true)) {
+        if (task_work_add(current, cb, TWA_RESUME)) {
             kfree(cb);
             pr_warn("install manager fd add task_work failed\n");
         }
@@ -107,7 +112,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
     }
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-    // Check if spawned process is isolated service first, and force to do umount if so  
+    // Check if spawned process is isolated service first, and force to do umount if so
     if (is_zygote_isolated_service_uid(new_uid)) {
         goto do_umount;
     }
@@ -116,8 +121,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
     // - Since ksu maanger app uid is excluded in allow_list_arr, so ksu_uid_should_umount(manager_uid)
     //   will always return true, that's why we need to explicitly check if new_uid belongs to
     //   ksu manager
-    if (likely(ksu_is_manager_appid_valid()) &&
-        unlikely(ksu_get_manager_appid() == new_uid % PER_USER_RANGE)) {
+    if (ksu_get_manager_appid() == new_uid % PER_USER_RANGE) {
         spin_lock_irq(&current->sighand->siglock);
         ksu_seccomp_allow_cache(current->seccomp.filter, __NR_reboot);
         spin_unlock_irq(&current->sighand->siglock);
@@ -127,7 +131,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
         if (!cb)
             return 0;
         cb->func = ksu_install_manager_fd_tw_func;
-        if (task_work_add(current, cb, true)) {
+        if (task_work_add(current, cb, TWA_RESUME)) {
             kfree(cb);
             pr_warn("install manager fd add task_work failed\n");
         }
@@ -153,6 +157,15 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
 do_umount:
     // Handle kernel umount
     ksu_handle_umount(old_uid, new_uid);
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+    // We can reorder the mnt_id now after all sus mounts are umounted
+    susfs_reorder_mnt_id();
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+    susfs_run_sus_path_loop(new_uid);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 
     susfs_set_current_proc_umounted();
 

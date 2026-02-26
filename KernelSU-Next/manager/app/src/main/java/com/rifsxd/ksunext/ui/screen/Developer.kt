@@ -14,10 +14,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.rifsxd.ksunext.ui.LocalScrollState
+import com.rifsxd.ksunext.ui.rememberScrollConnection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.edit
+import androidx.lifecycle.compose.dropUnlessResumed
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -37,26 +41,46 @@ import com.rifsxd.ksunext.ui.util.LocalSnackbarHost
 @Composable
 fun DeveloperScreen(navigator: DestinationsNavigator) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    // Bottom bar scroll tracking
+    val bottomBarScrollState = LocalScrollState.current
+    val bottomBarScrollConnection = if (bottomBarScrollState != null) {
+        rememberScrollConnection(
+            isScrollingDown = bottomBarScrollState.isScrollingDown,
+            scrollOffset = bottomBarScrollState.scrollOffset,
+            previousScrollOffset = bottomBarScrollState.previousScrollOffset,
+            threshold = 30f
+        )
+    } else null
     val snackBarHost = LocalSnackbarHost.current
 
     val isManager = Natives.isManager
     val ksuVersion = if (isManager) Natives.version else null
 
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 112.dp
+
     Scaffold(
         topBar = {
             TopBar(
-                onBack = { navigator.popBackStack() },
+                onBack = dropUnlessResumed { navigator.popBackStack() },
                 scrollBehavior = scrollBehavior
             )
         },
-        snackbarHost = { SnackbarHost(snackBarHost) },
+        snackbarHost = { SnackbarHost(snackBarHost, modifier = Modifier.padding(bottom = navBarPadding)) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { paddingValues ->
 
         Column(
             modifier = Modifier
                 .padding(paddingValues)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .let { modifier ->
+                    if (bottomBarScrollConnection != null) {
+                        modifier
+                            .nestedScroll(bottomBarScrollConnection)
+                            .nestedScroll(scrollBehavior.nestedScrollConnection)
+                    } else {
+                        modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                    }
+                }
                 .verticalScroll(rememberScrollState())
         ) {
             val context = LocalContext.current

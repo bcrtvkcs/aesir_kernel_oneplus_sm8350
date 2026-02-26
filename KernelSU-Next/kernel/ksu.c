@@ -56,7 +56,13 @@ int __init kernelsu_init(void)
 
 	ksu_throne_tracker_init();
 
+#ifdef CONFIG_KSU_SUSFS
+	susfs_init();
+#endif // #ifdef CONFIG_KSU_SUSFS
+
+#ifndef CONFIG_KSU_SUSFS
 	ksu_ksud_init();
+#endif // #ifndef CONFIG_KSU_SUSFS
 
     ksu_file_wrapper_init();
 
