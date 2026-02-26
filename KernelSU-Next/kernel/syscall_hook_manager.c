@@ -2,6 +2,7 @@
 #include "linux/cred.h"
 #include "linux/printk.h"
 #include "selinux/selinux.h"
+#include <linux/sched/task.h>
 #include <linux/spinlock.h>
 #include <linux/kprobes.h>
 #include <linux/tracepoint.h>

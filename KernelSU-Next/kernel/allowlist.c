@@ -1,5 +1,6 @@
 #include <linux/mutex.h>
 #include <linux/task_work.h>
+#include <linux/sched/task.h>
 #include <linux/capability.h>
 #include <linux/compiler.h>
 #include <linux/fs.h>
@@ -422,7 +423,7 @@ void persistent_allow_list()
 		goto put_task;
 	}
 	cb->func = do_persistent_allow_list;
-	if (task_work_add(tsk, cb, TWA_RESUME)) {
+	if (task_work_add(tsk, cb, true)) {
 		kfree(cb);
 		pr_warn("save_allow_list add task_work failed\n");
 	}
