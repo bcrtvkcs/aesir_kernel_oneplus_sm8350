@@ -157,3 +157,5 @@ Android.bp
 #
 logs_tmp
 #
+
+/KernelSU-Next/.git

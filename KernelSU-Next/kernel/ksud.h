@@ -2,6 +2,12 @@
 #define __KSU_H_KSUD
 
 #include <linux/types.h>
+#include <linux/sched/task.h>
+
+/* Fallback for older kernels where TWA_RESUME is not defined */
+#ifndef TWA_RESUME
+#define TWA_RESUME true
+#endif
 
 #define KSUD_PATH "/data/adb/ksud"
 
