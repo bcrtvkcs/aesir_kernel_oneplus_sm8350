@@ -21,9 +21,11 @@ struct watch_dir {
 
 static struct fsnotify_group *g;
 
-static int ksu_handle_inode_event(struct fsnotify_mark *mark, u32 mask,
-                                  struct inode *inode, struct inode *dir,
-                                  const struct qstr *file_name, u32 cookie)
+static int ksu_handle_event(struct fsnotify_group *group,
+                            struct inode *inode,
+                            u32 mask, const void *data, int data_type,
+                            const struct qstr *file_name, u32 cookie,
+                            struct fsnotify_iter_info *iter_info)
 {
     if (!file_name)
         return 0;
@@ -37,7 +39,7 @@ static int ksu_handle_inode_event(struct fsnotify_mark *mark, u32 mask,
 }
 
 static const struct fsnotify_ops ksu_ops = {
-	.handle_inode_event = ksu_handle_inode_event,
+	.handle_event = ksu_handle_event,
 };
 
 static int add_mark_on_inode(struct inode *inode, u32 mask,
