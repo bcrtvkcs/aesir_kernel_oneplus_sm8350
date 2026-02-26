@@ -9,15 +9,13 @@
 #include "linux/lsm_audit.h" // IWYU pragma: keep
 #include "xfrm.h"
 
-#define SELINUX_POLICY_INSTEAD_SELINUX_SS
-
 #define ALL NULL
 
 static struct policydb *get_policydb(void)
 {
     struct policydb *db;
-    struct selinux_policy *policy = selinux_state.policy;
-    db = &policy->policydb;
+    // 5.4 kernel: no selinux_policy struct, access policydb directly through ss
+    db = &selinux_state.ss->policydb;
     return db;
 }
 
