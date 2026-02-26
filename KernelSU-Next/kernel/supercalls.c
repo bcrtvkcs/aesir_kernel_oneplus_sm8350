@@ -24,9 +24,10 @@
 #include "manager.h"
 #include "selinux/selinux.h"
 #include "file_wrapper.h"
-#ifndef CONFIG_KSU_SUSFS
 #include "syscall_hook_manager.h"
-#endif // #ifndef CONFIG_KSU_SUSFS
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+#endif // #ifdef CONFIG_KSU_SUSFS
 
 #include "tiny_sulog.c"
 
