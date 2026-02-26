@@ -20,9 +20,6 @@
 #include "inotify/inotify.h"
 #include "fdinfo.h"
 #include "fsnotify.h"
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-#include "../mount.h"
-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 #if defined(CONFIG_PROC_FS)
 
