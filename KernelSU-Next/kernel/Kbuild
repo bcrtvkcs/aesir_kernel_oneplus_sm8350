@@ -3,7 +3,6 @@ kernelsu-objs += allowlist.o
 kernelsu-objs += app_profile.o
 kernelsu-objs += apk_sign.o
 kernelsu-objs += sucompat.o
-kernelsu-objs += syscall_hook_manager.o
 kernelsu-objs += throne_tracker.o
 kernelsu-objs += pkg_observer.o
 kernelsu-objs += setuid_hook.o
@@ -24,6 +23,12 @@ ccflags-y += -I$(srctree)/security/selinux -I$(srctree)/security/selinux/include
 ccflags-y += -I$(objtree)/security/selinux -include $(srctree)/include/uapi/asm-generic/errno.h
 
 obj-$(CONFIG_KSU) += kernelsu.o
+
+ifdef CONFIG_KSU_SUSFS
+$(eval SUSFS_VERSION=$(shell cat $(srctree)/include/linux/susfs.h | grep -E '^#define SUSFS_VERSION' | cut -d' ' -f3 | sed 's/"//g'))
+ccflags-y += -DSUSFS_VERSION=\"$(SUSFS_VERSION)\"
+$(info -- SUSFS_VERSION: $(SUSFS_VERSION))
+endif
 
 LPATH := /usr/bin/env PATH="$$PATH":/usr/bin:/usr/local/bin
 MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))

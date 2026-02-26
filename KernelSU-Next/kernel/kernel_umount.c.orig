@@ -73,10 +73,6 @@ struct umount_tw {
 	struct callback_head cb;
 };
 
-#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-extern void susfs_run_sus_path_loop(void);
-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_PATH
-
 static void umount_tw_func(struct callback_head *cb)
 {
 	struct umount_tw *tw = container_of(cb, struct umount_tw, cb);
@@ -113,7 +109,6 @@ int ksu_handle_umount(uid_t old_uid, uid_t new_uid)
 		return 0;
 	}
 
-#ifndef CONFIG_KSU_SUSFS
     // There are 5 scenarios:
     // 1. Normal app: zygote -> appuid
     // 2. Isolated process forked from zygote: zygote -> isolated_process
