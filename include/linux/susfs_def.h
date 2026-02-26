@@ -3,6 +3,7 @@
 
 #include <linux/bits.h>
 #include <linux/version.h>
+#include <linux/cred.h>
 
 /********/
 /* ENUM */
