@@ -8,6 +8,8 @@
 #include "klog.h" // IWYU pragma: keep
 #include "seccomp_cache.h"
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0)
+
 struct action_cache {
 	DECLARE_BITMAP(allow_native, SECCOMP_ARCH_NATIVE_NR);
 #ifdef SECCOMP_ARCH_COMPAT
@@ -63,3 +65,17 @@ void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
     }
 #endif
 }
+
+#else /* KERNEL < 5.15 — no seccomp bitmap cache */
+
+void ksu_seccomp_clear_cache(struct seccomp_filter *filter, int nr)
+{
+    /* seccomp action_cache not available before 5.15 */
+}
+
+void ksu_seccomp_allow_cache(struct seccomp_filter *filter, int nr)
+{
+    /* seccomp action_cache not available before 5.15 */
+}
+
+#endif
