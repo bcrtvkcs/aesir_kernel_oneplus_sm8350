@@ -8,6 +8,7 @@
 #include <linux/version.h>
 #include "klog.h" // IWYU pragma: keep
 #include "throne_tracker.h"
+#include "manager.h"
 
 #define MASK_SYSTEM (FS_CREATE | FS_MOVE | FS_EVENT_ON_CHILD)
 
@@ -123,7 +124,7 @@ int ksu_observer_init(void)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 0, 0)
 	g = fsnotify_alloc_group(&ksu_ops, 0);
 #else
-	g = fsnotify_alloc_group(&ksu_ops);
+	g = fsnotify_alloc_group(&ksu_pkg_observer_ops);
 #endif
 	if (IS_ERR(g))
 		return PTR_ERR(g);
