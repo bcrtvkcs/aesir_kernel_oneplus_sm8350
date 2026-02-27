@@ -13,6 +13,7 @@
 #include <linux/version.h>
 #include <linux/utsname.h> // utsname() and uts_sem
 #include "ksu.h"
+void ksu_mark_running_process(void);
 #ifdef CONFIG_KSU_SUSFS
 #include <linux/namei.h>
 #include <linux/susfs.h>

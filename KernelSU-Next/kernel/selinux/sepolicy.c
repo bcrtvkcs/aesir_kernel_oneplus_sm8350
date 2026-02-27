@@ -480,12 +480,12 @@ static const struct hashtab_key_params filenametr_key_params = {
 #endif
 
 static bool add_filename_trans(struct policydb *db, const char *s,
-                               const char *t, const char *c, const char *d,
-                               const char *o)
+                               const char *t, const char *c, const char *d,
+                               const char *o)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
 	/* Legacy kernels (5.4) do not support multi-type filename transitions in this way. 
-	   Skipping to avoid incomplete type errors. */
+	   Returning true to avoid incomplete type errors during build. */
 	return true;
 #else
 	struct type_datum *src, *tgt, *def;
