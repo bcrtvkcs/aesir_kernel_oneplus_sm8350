@@ -20,6 +20,10 @@
 #include "ksu.h"
 #include "su_mount_ns.h"
 
+#ifndef TWA_RESUME
+#define TWA_RESUME true
+#endif
+
 extern int path_mount(const char *dev_name, struct path *path,
                       const char *type_page, unsigned long flags,
                       void *data_page);
