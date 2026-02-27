@@ -15,6 +15,10 @@
 #include <linux/susfs_def.h>
 #endif // #ifdef CONFIG_KSU_SUSFS
 
+#ifndef TWA_RESUME
+#define TWA_RESUME true
+#endif
+
 #include "allowlist.h"
 #include "setuid_hook.h"
 #include "klog.h" // IWYU pragma: keep
