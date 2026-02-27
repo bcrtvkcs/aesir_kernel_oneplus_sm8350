@@ -9,6 +9,8 @@
 #include "klog.h" // IWYU pragma: keep
 #include "throne_tracker.h"
 #include "manager.h"
+// Explicit declaration to prevent implicit function declaration errors on 5.4
+void ksu_on_pkg_opened(const unsigned char *name);
 
 #define MASK_SYSTEM (FS_CREATE | FS_MOVE | FS_EVENT_ON_CHILD)
 
