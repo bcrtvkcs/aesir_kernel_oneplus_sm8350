@@ -8,6 +8,11 @@
 #include "klog.h" // IWYU pragma: keep
 #include "seccomp_cache.h"
 
+/* Fallback for older kernels missing SECCOMP_ARCH_NATIVE_NR */
+#ifndef SECCOMP_ARCH_NATIVE_NR
+#define SECCOMP_ARCH_NATIVE_NR 1
+#endif
+
 struct action_cache {
 	DECLARE_BITMAP(allow_native, SECCOMP_ARCH_NATIVE_NR);
 #ifdef SECCOMP_ARCH_COMPAT
