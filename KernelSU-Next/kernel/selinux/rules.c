@@ -17,7 +17,7 @@ static struct policydb *get_policydb(void)
 {
 	struct policydb *db;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
-	db = selinux_state.ss->policydb;
+	db = &selinux_state.ss->policydb;
 #else
 	struct selinux_policy *policy = selinux_state.policy;
 	db = &policy->policydb;
