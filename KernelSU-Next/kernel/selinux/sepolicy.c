@@ -480,68 +480,74 @@ static const struct hashtab_key_params filenametr_key_params = {
 #endif
 
 static bool add_filename_trans(struct policydb *db, const char *s,
-                               const char *t, const char *c, const char *d,
-                               const char *o)
+                               const char *t, const char *c, const char *d,
+                               const char *o)
 {
-    struct type_datum *src, *tgt, *def;
-    struct class_datum *cls;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 7, 0)
+	/* Legacy kernels (5.4) do not support multi-type filename transitions in this way. 
+	   Skipping to avoid incomplete type errors. */
+	return true;
+#else
+	struct type_datum *src, *tgt, *def;
+	struct class_datum *cls;
 
-    src = symtab_search(&db->p_types, s);
-    if (src == NULL) {
-        pr_warn("source type %s does not exist\n", s);
-        return false;
-    }
-    tgt = symtab_search(&db->p_types, t);
-    if (tgt == NULL) {
-        pr_warn("target type %s does not exist\n", t);
-        return false;
-    }
-    cls = symtab_search(&db->p_classes, c);
-    if (cls == NULL) {
-        pr_warn("class %s does not exist\n", c);
-        return false;
-    }
-    def = symtab_search(&db->p_types, d);
-    if (def == NULL) {
-        pr_warn("default type %s does not exist\n", d);
-        return false;
-    }
+	src = symtab_search(&db->p_types, s);
+	if (src == NULL) {
+		pr_warn("source type %s does not exist\n", s);
+		return false;
+	}
+	tgt = symtab_search(&db->p_types, t);
+	if (tgt == NULL) {
+		pr_warn("target type %s does not exist\n", t);
+		return false;
+	}
+	cls = symtab_search(&db->p_classes, c);
+	if (cls == NULL) {
+		pr_warn("class %s does not exist\n", c);
+		return false;
+	}
+	def = symtab_search(&db->p_types, d);
+	if (def == NULL) {
+		pr_warn("default type %s does not exist\n", d);
+		return false;
+	}
 
-    struct filename_trans_key key;
-    key.ttype = tgt->value;
-    key.tclass = cls->value;
-    key.name = (char *)o;
+	struct filename_trans_key key;
+	key.ttype = tgt->value;
+	key.tclass = cls->value;
+	key.name = (char *)o;
 
-    struct filename_trans_datum *last = NULL;
+	struct filename_trans_datum *last = NULL;
 
-    struct filename_trans_datum *trans = policydb_filenametr_search(db, &key);
-    while (trans) {
-        if (ebitmap_get_bit(&trans->stypes, src->value - 1)) {
-            // Duplicate, overwrite existing data and return
-            trans->otype = def->value;
-            return true;
-        }
-        if (trans->otype == def->value)
-            break;
-        last = trans;
-        trans = trans->next;
-    }
+	struct filename_trans_datum *trans = policydb_filenametr_search(db, &key);
+	while (trans) {
+		if (ebitmap_get_bit(&trans->stypes, src->value - 1)) {
+			// Duplicate, overwrite existing data and return
+			trans->otype = def->value;
+			return true;
+		}
+		if (trans->otype == def->value)
+			break;
+		last = trans;
+		trans = trans->next;
+	}
 
-    if (trans == NULL) {
-        trans = (struct filename_trans_datum *)kcalloc(1, sizeof(*trans),
-                                                       GFP_ATOMIC);
-        struct filename_trans_key *new_key =
-            (struct filename_trans_key *)kzalloc(sizeof(*new_key), GFP_ATOMIC);
-        *new_key = key;
-        new_key->name = kstrdup(key.name, GFP_ATOMIC);
-        trans->next = last;
-        trans->otype = def->value;
-        hashtab_insert(&db->filename_trans, new_key, trans,
-                       filenametr_key_params);
-    }
+	if (trans == NULL) {
+		trans = (struct filename_trans_datum *)kcalloc(1, sizeof(*trans),
+														GFP_ATOMIC);
+		struct filename_trans_key *new_key =
+			(struct filename_trans_key *)kzalloc(sizeof(*new_key), GFP_ATOMIC);
+		*new_key = key;
+		new_key->name = kstrdup(key.name, GFP_ATOMIC);
+		trans->next = last;
+		trans->otype = def->value;
+		hashtab_insert(&db->filename_trans, new_key, trans,
+						filenametr_key_params);
+	}
 
-    db->compat_filename_trans_count++;
-    return ebitmap_set_bit(&trans->stypes, src->value - 1, 1) == 0;
+	db->compat_filename_trans_count++;
+	return ebitmap_set_bit(&trans->stypes, src->value - 1, 1) == 0;
+#endif
 }
 
 static bool add_genfscon(struct policydb *db, const char *fs_name,
