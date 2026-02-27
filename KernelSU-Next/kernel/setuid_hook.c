@@ -164,7 +164,7 @@ do_umount:
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
     // We can reorder the mnt_id now after all sus mounts are umounted
-    /* Bypass undefined symbol for strict legacy kernel linking */
+    // Bypass undefined symbol for strict legacy kernel linking
     // susfs_reorder_mnt_id();
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
