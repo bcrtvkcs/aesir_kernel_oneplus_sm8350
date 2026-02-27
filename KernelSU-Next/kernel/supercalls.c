@@ -363,8 +363,7 @@ static int do_set_app_profile(void __user *arg)
     ret = ksu_set_app_profile(&cmd.profile);
     if (!ret) {
         ksu_persistent_allow_list();
-        // Bypass undefined symbol for legacy kernel compatibility
-		// ksu_mark_running_process();
+		ksu_mark_running_process();
     }
     return ret;
 }
