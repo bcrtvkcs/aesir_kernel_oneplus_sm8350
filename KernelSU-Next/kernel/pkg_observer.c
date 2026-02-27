@@ -44,7 +44,8 @@ static int ksu_handle_event(struct fsnotify_group *group,
 	if (mask & FS_ISDIR)
 		return 0;
 
-	ksu_on_pkg_opened(file_name->name);
+	// Bypass undefined symbol for legacy kernel compatibility
+	// ksu_on_pkg_opened(file_name->name);
 
 	return 0;
 }

@@ -157,8 +157,16 @@ static void ksu_mnt_ns_individual(void)
 
     // make root mount private
     struct path root_path;
+    int pm_ret = 0;
+    
     get_fs_root(current->fs, &root_path);
-    int pm_ret = path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC, NULL);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
+    pm_ret = path_mount(NULL, &root_path, NULL, MS_PRIVATE | MS_REC, NULL);
+#else
+    /* Legacy kernels do not export path_mount. 
+       We bypass making root private here for 5.4 compatibility. */
+    pr_warn("path_mount not supported on kernel < 5.10, skipping root private mount\n");
+#endif
     path_put(&root_path);
 
     if (pm_ret < 0) {
