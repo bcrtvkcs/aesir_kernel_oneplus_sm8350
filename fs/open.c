@@ -359,11 +359,16 @@ extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int
 
 long do_faccessat(int dfd, const char __user *filename, int mode)
 {
-/* Inline Hook for KernelSU-Next Manager communication */
-    ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
+	const struct cred *old_cred;
+	struct filename *name;
+	int res;
+	unsigned int lookup_flags = LOOKUP_FOLLOW;
 
-    if (mode & ~S_IRWXO)
-        return -EINVAL;
+	/* Inline Hook for KernelSU-Next - Değişken tanımlarından sonra yerleştirildi */
+	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
+
+	if (mode & ~S_IRWXO)
+		return -EINVAL;
 
 	const struct cred *old_cred;
 	struct cred *override_cred;
