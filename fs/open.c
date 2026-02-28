@@ -360,34 +360,28 @@ extern int ksu_handle_faccessat(int *dfd, const char __user **filename_user, int
 long do_faccessat(int dfd, const char __user *filename, int mode)
 {
 	const struct cred *old_cred;
-	struct filename *name;
-	int res;
-	unsigned int lookup_flags = LOOKUP_FOLLOW;
-
-	/* Inline Hook for KernelSU-Next - Değişken tanımlarından sonra yerleştirildi */
-	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
-
-	if (mode & ~S_IRWXO)
-		return -EINVAL;
-
-	const struct cred *old_cred;
 	struct cred *override_cred;
 	struct path path;
 	struct inode *inode;
 	int res;
 	unsigned int lookup_flags = LOOKUP_FOLLOW;
 
+	/* 1. KSU-Next & SuSFS Hook Logic - Tüm tanımlamalardan hemen sonra */
 #ifdef CONFIG_KSU_SUSFS
 	if (likely(!susfs_is_current_proc_umounted()) && ksu_su_compat_enabled) {
 		if (unlikely(__ksu_is_allow_uid_for_current(current_uid().val))) {
 			ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
 		}
 	}
+#else
+	ksu_handle_faccessat(&dfd, &filename, &mode, NULL);
 #endif
 
-	if (mode & ~S_IRWXO)	/* where's F_OK, X_OK, W_OK, R_OK? */
+	/* 2. Basic Validation */
+	if (mode & ~S_IRWXO)
 		return -EINVAL;
 
+	/* 3. Prepare Subjective Credentials */
 	override_cred = prepare_creds();
 	if (!override_cred)
 		return -ENOMEM;
@@ -396,35 +390,17 @@ long do_faccessat(int dfd, const char __user *filename, int mode)
 	override_cred->fsgid = override_cred->gid;
 
 	if (!issecure(SECURE_NO_SETUID_FIXUP)) {
-		/* Clear the capabilities if we switch to a non-root user */
 		kuid_t root_uid = make_kuid(override_cred->user_ns, 0);
 		if (!uid_eq(override_cred->uid, root_uid))
 			cap_clear(override_cred->cap_effective);
 		else
-			override_cred->cap_effective =
-				override_cred->cap_permitted;
+			override_cred->cap_effective = override_cred->cap_permitted;
 	}
 
-	/*
-	 * The new set of credentials can *only* be used in
-	 * task-synchronous circumstances, and does not need
-	 * RCU freeing, unless somebody then takes a separate
-	 * reference to it.
-	 *
-	 * NOTE! This is _only_ true because this credential
-	 * is used purely for override_creds() that installs
-	 * it as the subjective cred. Other threads will be
-	 * accessing ->real_cred, not the subjective cred.
-	 *
-	 * If somebody _does_ make a copy of this (using the
-	 * 'get_current_cred()' function), that will clear the
-	 * non_rcu field, because now that other user may be
-	 * expecting RCU freeing. But normal thread-synchronous
-	 * cred accesses will keep things non-RCY.
-	 */
 	override_cred->non_rcu = 1;
-
 	old_cred = override_creds(override_cred);
+
+	/* 4. Execution Logic with Retry Support */
 retry:
 	res = user_path_at(dfd, filename, lookup_flags, &path);
 	if (res)
@@ -433,29 +409,16 @@ retry:
 	inode = d_backing_inode(path.dentry);
 
 	if ((mode & MAY_EXEC) && S_ISREG(inode->i_mode)) {
-		/*
-		 * MAY_EXEC on regular files is denied if the fs is mounted
-		 * with the "noexec" flag.
-		 */
 		res = -EACCES;
 		if (path_noexec(&path))
 			goto out_path_release;
 	}
 
 	res = inode_permission(inode, mode | MAY_ACCESS);
-	/* SuS v2 requires we report a read only fs too */
+
 	if (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
 		goto out_path_release;
-	/*
-	 * This is a rare case where using __mnt_is_readonly()
-	 * is OK without a mnt_want/drop_write() pair.  Since
-	 * no actual write to the fs is performed here, we do
-	 * not need to telegraph to that to anyone.
-	 *
-	 * By doing this, we accept that this access is
-	 * inherently racy and know that the fs may change
-	 * state before we even see this result.
-	 */
+
 	if (__mnt_is_readonly(path.mnt))
 		res = -EROFS;
 
