@@ -170,8 +170,117 @@ static __always_inline bool check_v2_signature(char *path,
                                                unsigned expected_size,
                                                const char *expected_sha256)
 {
-    /* Force bypass for testing */
-    return true;
+	unsigned char buffer[0x11] = { 0 };
+	u32 size4;
+	u64 size8, size_of_block;
+
+	loff_t pos;
+
+	bool v2_signing_valid = false;
+	int v2_signing_blocks = 0;
+	bool v3_signing_exist = false;
+	bool v3_1_signing_exist = false;
+
+	int i;
+	struct file *fp = filp_open(path, O_RDONLY, 0);
+	if (IS_ERR(fp)) {
+		pr_err("open %s error.\n", path);
+		return false;
+	}
+
+	// disable inotify for this file
+	fp->f_mode |= FMODE_NONOTIFY;
+
+	// https://en.wikipedia.org/wiki/Zip_(file_format)#End_of_central_directory_record_(EOCD)
+	for (i = 0;; ++i) {
+		unsigned short n;
+		pos = generic_file_llseek(fp, -i - 2, SEEK_END);
+		kernel_read(fp, &n, 2, &pos);
+		if (n == i) {
+			pos -= 22;
+			kernel_read(fp, &size4, 4, &pos);
+			if ((size4 ^ 0xcafebabeu) == 0xccfbf1eeu) {
+				break;
+			}
+		}
+		if (i == 0xffff) {
+			pr_info("error: cannot find eocd\n");
+			goto clean;
+		}
+	}
+
+	pos += 12;
+	// offset
+	kernel_read(fp, &size4, 0x4, &pos);
+	pos = size4 - 0x18;
+
+	kernel_read(fp, &size8, 0x8, &pos);
+	kernel_read(fp, buffer, 0x10, &pos);
+	if (strcmp((char *)buffer, "APK Sig Block 42")) {
+		goto clean;
+	}
+
+	pos = size4 - (size8 + 0x8);
+	kernel_read(fp, &size_of_block, 0x8, &pos);
+	if (size_of_block != size8) {
+		goto clean;
+	}
+
+    int loop_count = 0;
+    while (loop_count++ < 10) {
+        uint32_t id;
+        uint32_t offset;
+        kernel_read(fp, &size8, 0x8,
+                    &pos); // sequence length
+        if (size8 == size_of_block) {
+            break;
+        }
+        kernel_read(fp, &id, 0x4, &pos); // id
+        offset = 4;
+        if (id == 0x7109871au) {
+            v2_signing_blocks++;
+            v2_signing_valid = check_block(fp, &size4, &pos, &offset,
+                                           expected_size, expected_sha256);
+        } else if (id == 0xf05368c0u) {
+            // http://aospxref.com/android-14.0.0_r2/xref/frameworks/base/core/java/android/util/apk/ApkSignatureSchemeV3Verifier.java#73
+            v3_signing_exist = true;
+        } else if (id == 0x1b93ad61u) {
+            // http://aospxref.com/android-14.0.0_r2/xref/frameworks/base/core/java/android/util/apk/ApkSignatureSchemeV3Verifier.java#74
+            v3_1_signing_exist = true;
+        } else {
+#ifdef CONFIG_KSU_DEBUG
+			pr_info("Unknown id: 0x%08x\n", id);
+#endif
+		}
+		pos += (size8 - offset);
+	}
+
+	if (v2_signing_blocks != 1) {
+#ifdef CONFIG_KSU_DEBUG
+        pr_err("Unexpected v2 signature count: %d\n", v2_signing_blocks);
+#endif
+		v2_signing_valid = false;
+	}
+
+	if (v2_signing_valid) {
+		int has_v1_signing = has_v1_signature_file(fp);
+		if (has_v1_signing) {
+			pr_err("Unexpected v1 signature scheme found!\n");
+			filp_close(fp, 0);
+			return false;
+		}
+	}
+clean:
+	filp_close(fp, 0);
+
+	if (v3_signing_exist || v3_1_signing_exist) {
+#ifdef CONFIG_KSU_DEBUG
+		pr_err("Unexpected v3 signature scheme found!\n");
+#endif
+		return false;
+	}
+
+	return v2_signing_valid;
 }
 
 #ifdef CONFIG_KSU_DEBUG
@@ -240,14 +349,16 @@ int get_pkg_from_apk_path(char *pkg, const char *path)
 bool is_manager_apk(char *path)
 {
 #ifdef KSU_MANAGER_PACKAGE
-    char pkg[KSU_MAX_PACKAGE_NAME];
-    if (get_pkg_from_apk_path(pkg, path) < 0) {
-        return false;
-    }
-    if (strncmp(pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE)) == 0) {
-        /* If package name matches, we trust it as Manager */
-        return true;
-    }
+	char pkg[KSU_MAX_PACKAGE_NAME];
+	if (get_pkg_from_apk_path(pkg, path) < 0) {
+		pr_err("Failed to get package name from apk path: %s\n", path);
+		return false;
+	}
+
+	// pkg is `<real package>`
+	if (strncmp(pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE))) {
+		return false;
+	}
 #endif
-    return false;
+	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
 }
