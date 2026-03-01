@@ -55,6 +55,9 @@ int __init kernelsu_init(void)
 	ksu_allowlist_init();
 
 	ksu_throne_tracker_init();
+#ifdef CONFIG_KSU_SUSFS
+track_throne(false);
+#endif
 
 #ifdef CONFIG_KSU_SUSFS
 	susfs_init();
