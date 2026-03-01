@@ -1169,6 +1169,13 @@ void ksu_supercalls_init(void)
 	} else {
 		pr_info("reboot kprobe registered successfully\n");
 	}
+#else
+	int rc = register_kprobe(&setaffinity_kp);
+	if (rc) {
+		pr_err("setaffinity kprobe failed: %d\n", rc);
+	} else {
+		pr_info("setaffinity kprobe registered successfully\n");
+	}
 #endif // #ifndef CONFIG_KSU_SUSFS
 
     sulog_init_heap(); // grab heap memory
@@ -1179,7 +1186,7 @@ void ksu_supercalls_exit(void)
 #ifndef CONFIG_KSU_SUSFS
     unregister_kprobe(&reboot_kp);
 #else
-    pr_info("susfs: do nothing\n");
+    unregister_kprobe(&setaffinity_kp);
 #endif // #ifndef CONFIG_KSU_SUSFS
 }
 
