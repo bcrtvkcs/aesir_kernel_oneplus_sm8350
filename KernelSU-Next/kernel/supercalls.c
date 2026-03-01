@@ -859,13 +859,12 @@ static void ksu_install_fd_tw_func(struct callback_head *cb)
 }
 
 #ifdef CONFIG_KSU_SUSFS
-static int setaffinity_handler_pre(struct kprobe *p, struct pt_regs *regs)
+static int reboot_handler_pre_susfs(struct kprobe *p, struct pt_regs *regs)
 {
 	struct pt_regs *real_regs = PT_REAL_REGS(regs);
 	int magic1 = (int)PT_REGS_PARM1(real_regs);
 	int magic2 = (int)PT_REGS_PARM2(real_regs);
 	unsigned long arg4 = (unsigned long)PT_REGS_SYSCALL_PARM4(real_regs);
-
 	if (magic1 == KSU_INSTALL_MAGIC1 && magic2 == KSU_INSTALL_MAGIC2) {
 		struct ksu_install_fd_tw *tw;
 		tw = kzalloc(sizeof(*tw), GFP_ATOMIC);
@@ -875,15 +874,14 @@ static int setaffinity_handler_pre(struct kprobe *p, struct pt_regs *regs)
 		tw->cb.func = ksu_install_fd_tw_func;
 		if (task_work_add(current, &tw->cb, TWA_RESUME)) {
 			kfree(tw);
-			pr_warn("setaffinity: install fd add task_work failed\n");
+			pr_warn("reboot: install fd add task_work failed\n");
 		}
 	}
 	return 0;
 }
-
 static struct kprobe setaffinity_kp = {
-	.symbol_name = SETAFFINITY_SYMBOL,
-	.pre_handler = setaffinity_handler_pre,
+	.symbol_name = REBOOT_SYMBOL,
+	.pre_handler = reboot_handler_pre_susfs,
 };
 #endif // #ifdef CONFIG_KSU_SUSFS
 
