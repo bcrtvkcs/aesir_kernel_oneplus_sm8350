@@ -355,6 +355,7 @@ bool is_manager_apk(char *path)
 		return false;
 	}
 	// pkg is `<real package>`
+	pr_info("is_manager_apk: pkg='%s' expected='%s' sizeof=%zu\n", pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE));
 	if (strncmp(pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE))) {
 		return false;
 	}

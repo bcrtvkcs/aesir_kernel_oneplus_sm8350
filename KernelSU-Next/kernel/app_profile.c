@@ -110,11 +110,11 @@ static void disable_seccomp(void)
 void escape_with_root_profile(void)
 {
     struct cred *cred;
-    struct root_profile profile;
 #ifndef CONFIG_KSU_SUSFS
     struct task_struct *p = current;
     struct task_struct *t;
 #endif // #ifndef CONFIG_KSU_SUSFS
+    struct root_profile profile;
 
     cred = prepare_creds();
     if (!cred) {
