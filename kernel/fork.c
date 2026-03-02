@@ -2282,6 +2282,21 @@ static __latent_entropy struct task_struct *copy_process(
 	 */
 	copy_seccomp(p);
 
+	#ifdef CONFIG_KSU
+	{
+		extern pid_t ksu_manager_spawn_pid;
+		if (ksu_manager_spawn_pid != 0 &&
+		    current->pid == ksu_manager_spawn_pid &&
+		    p->seccomp.mode != SECCOMP_MODE_DISABLED) {
+			put_seccomp_filter(p);
+			p->seccomp.filter = NULL;
+			p->seccomp.mode   = SECCOMP_MODE_DISABLED;
+			clear_tsk_thread_flag(p, TIF_SECCOMP);
+			ksu_manager_spawn_pid = 0;
+		}
+	}
+	#endif
+	
 	rseq_fork(p, clone_flags);
 
 	/* Don't start children in a dying pid namespace */
