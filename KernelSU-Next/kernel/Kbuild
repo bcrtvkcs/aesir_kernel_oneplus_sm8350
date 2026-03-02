@@ -29,7 +29,7 @@ MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Check if this is a git repository
 # Try to detect Git repo intelligently
-KSU_NEXT_DIR := $(realpath $(MDIR)/../../KernelSU-Next)
+KSU_NEXT_DIR := $(realpath $(srctree)/KernelSU-Next)
 KSU_GIT_VERSION := $(shell cd $(KSU_NEXT_DIR) && $(LPATH) git rev-list --count HEAD 2>/dev/null)
 KSU_GIT_TAG := $(shell cd $(KSU_NEXT_DIR) && $(LPATH) git describe --tags --abbrev=0 2>/dev/null)
 ifneq ($(KSU_GIT_VERSION),)
