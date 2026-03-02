@@ -31,6 +31,9 @@
 
 extern void disable_seccomp(void);
 
+pid_t ksu_manager_spawn_pid = 0;
+EXPORT_SYMBOL(ksu_manager_spawn_pid);
+
 #ifdef CONFIG_KSU_SUSFS
 static inline bool is_zygote_isolated_service_uid(uid_t uid)
 {
@@ -123,6 +126,7 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
     if (ksu_get_manager_appid() == new_uid % PER_USER_RANGE) {
 
         pr_info("install fd for manager: %d\n", new_uid);
+        ksu_manager_spawn_pid = current->pid;
         struct callback_head *cb = kzalloc(sizeof(*cb), GFP_ATOMIC);
         if (!cb)
             return 0;

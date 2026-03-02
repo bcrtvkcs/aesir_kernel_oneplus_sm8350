@@ -10,7 +10,7 @@
 
 /* Fallback for older kernels missing SECCOMP_ARCH_NATIVE_NR */
 #ifndef SECCOMP_ARCH_NATIVE_NR
-#define SECCOMP_ARCH_NATIVE_NR 1
+#define SECCOMP_ARCH_NATIVE_NR __NR_syscalls
 #endif
 
 struct action_cache {
