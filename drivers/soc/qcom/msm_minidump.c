@@ -190,7 +190,9 @@ static inline int validate_region(const struct md_region *entry)
 
 	if ((strlen(entry->name) > MAX_NAME_LENGTH) || !entry->virt_addr ||
 		(!IS_ALIGNED(entry->size, 4))) {
-		pr_err("Invalid entry details\n");
+		pr_err("Invalid entry details: name=%s name_len=%zu virt=0x%llx size=0x%x aligned=%d\n",
+			entry->name, strlen(entry->name), entry->virt_addr,
+			entry->size, IS_ALIGNED(entry->size, 4));
 		return -EINVAL;
 	}
 
