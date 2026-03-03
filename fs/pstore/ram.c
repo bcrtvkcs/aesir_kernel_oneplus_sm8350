@@ -928,8 +928,6 @@ static int ramoops_probe(struct platform_device *pdev)
 		cxt->size, (unsigned long long)cxt->phys_addr,
 		cxt->ecc_info.ecc_size);
 
-	register_minidump(cxt);
-
 	return 0;
 
 fail_buf:
@@ -1034,6 +1032,14 @@ static int __init ramoops_init(void)
 
 	return ret;
 }
+
+static int __init ramoops_register_minidump_late(void)
+{
+	register_minidump(&oops_cxt);
+	return 0;
+}
+late_initcall(ramoops_register_minidump_late);
+
 postcore_initcall(ramoops_init);
 
 static void __exit ramoops_exit(void)
