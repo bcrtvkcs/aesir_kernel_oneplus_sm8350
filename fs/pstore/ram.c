@@ -111,8 +111,11 @@ static void register_minidump(struct ramoops_context *cxt)
 		pstore_entry.virt_addr = (u64)(prz->vaddr);
 		pstore_entry.phys_addr = prz->paddr;
 		pstore_entry.size = prz->size;
-		if (msm_minidump_add_region(&pstore_entry) < 0)
-			pr_err("failed to add dmesg in minidump\n");
+		{
+    	int ret = msm_minidump_add_region(&pstore_entry);
+    	if (ret < 0)
+       		pr_err("failed to add dmesg in minidump, ret=%d\n", ret);
+		}
 	}
 	if (cxt->console_size) {
 		prz = cxt->cprz;
