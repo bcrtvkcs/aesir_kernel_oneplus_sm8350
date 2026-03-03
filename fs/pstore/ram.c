@@ -781,6 +781,7 @@ static int ramoops_parse_dt(struct platform_device *pdev,
 
 static int ramoops_probe(struct platform_device *pdev)
 {
+	pr_err("ramoops: probe called\n");
 	struct device *dev = &pdev->dev;
 	struct ramoops_platform_data *pdata = dev->platform_data;
 	struct ramoops_platform_data pdata_local;
