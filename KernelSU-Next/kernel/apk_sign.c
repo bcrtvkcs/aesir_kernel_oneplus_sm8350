@@ -354,13 +354,11 @@ bool is_manager_apk(char *path)
 		pr_err("Failed to get package name from apk path: %s\n", path);
 		return false;
 	}
+
 	// pkg is `<real package>`
-	pr_info("is_manager_apk: pkg='%s' expected='%s' sizeof=%zu\n", pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE));
 	if (strncmp(pkg, KSU_MANAGER_PACKAGE, sizeof(KSU_MANAGER_PACKAGE))) {
 		return false;
 	}
-	return true;
-#else
-	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
 #endif
+	return check_v2_signature(path, EXPECTED_MANAGER_SIZE, EXPECTED_MANAGER_HASH);
 }

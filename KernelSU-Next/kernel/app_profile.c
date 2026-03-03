@@ -64,7 +64,7 @@ void setup_groups(struct root_profile *profile, struct cred *cred)
 
 void seccomp_filter_release(struct task_struct *tsk);
 
-void disable_seccomp(void)
+static void disable_seccomp(void)
 {
     struct task_struct *fake;
 
