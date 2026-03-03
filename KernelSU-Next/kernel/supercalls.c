@@ -352,16 +352,16 @@ static int do_set_app_profile(void __user *arg)
 {
     struct ksu_set_app_profile_cmd cmd;
     int ret;
-
 	if (copy_from_user(&cmd, arg, sizeof(cmd))) {
 		pr_err("set_app_profile: copy_from_user failed\n");
 		return -EFAULT;
 	}
-
     ret = ksu_set_app_profile(&cmd.profile);
     if (!ret) {
         ksu_persistent_allow_list();
+#ifndef CONFIG_KSU_SUSFS
         ksu_mark_running_process();
+#endif // #ifndef CONFIG_KSU_SUSFS
     }
     return ret;
 }
