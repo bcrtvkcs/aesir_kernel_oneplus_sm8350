@@ -17,6 +17,7 @@
 #ifndef TWA_RESUME
 #define TWA_RESUME true
 #endif
+
 #include "allowlist.h"
 #include "setuid_hook.h"
 #include "klog.h" // IWYU pragma: keep
@@ -28,11 +29,6 @@
 #include "syscall_hook_manager.h"
 #endif // #ifndef CONFIG_KSU_SUSFS
 #include "kernel_umount.h"
-
-extern void disable_seccomp(void);
-
-pid_t ksu_manager_spawn_pid = 0;
-EXPORT_SYMBOL(ksu_manager_spawn_pid);
 
 #ifdef CONFIG_KSU_SUSFS
 static inline bool is_zygote_isolated_service_uid(uid_t uid)
@@ -52,7 +48,6 @@ extern u32 susfs_zygote_sid;
 
 static void ksu_install_manager_fd_tw_func(struct callback_head *cb)
 {
-    disable_seccomp();
     ksu_install_fd();
     kfree(cb);
 }
@@ -124,10 +119,11 @@ int ksu_handle_setresuid(uid_t ruid, uid_t euid, uid_t suid){
     //   will always return true, that's why we need to explicitly check if new_uid belongs to
     //   ksu manager
     if (ksu_get_manager_appid() == new_uid % PER_USER_RANGE) {
-        ksu_manager_spawn_pid = current->pid;
-        
+        spin_lock_irq(&current->sighand->siglock);
+        ksu_seccomp_allow_cache(current->seccomp.filter, __NR_reboot);
+        spin_unlock_irq(&current->sighand->siglock);
+
         pr_info("install fd for manager: %d\n", new_uid);
-        
         struct callback_head *cb = kzalloc(sizeof(*cb), GFP_ATOMIC);
         if (!cb)
             return 0;

@@ -361,8 +361,7 @@ static int do_set_app_profile(void __user *arg)
     ret = ksu_set_app_profile(&cmd.profile);
     if (!ret) {
         ksu_persistent_allow_list();
-		// Bypass undefined symbol for legacy kernel compatibility
-		// ksu_mark_running_process();
+        ksu_mark_running_process();
     }
     return ret;
 }
@@ -858,33 +857,6 @@ static void ksu_install_fd_tw_func(struct callback_head *cb)
 	kfree(tw);
 }
 
-#ifdef CONFIG_KSU_SUSFS
-static int reboot_handler_pre_susfs(struct kprobe *p, struct pt_regs *regs)
-{
-	struct pt_regs *real_regs = PT_REAL_REGS(regs);
-	int magic1 = (int)PT_REGS_PARM1(real_regs);
-	int magic2 = (int)PT_REGS_PARM2(real_regs);
-	unsigned long arg4 = (unsigned long)PT_REGS_SYSCALL_PARM4(real_regs);
-	if (magic1 == KSU_INSTALL_MAGIC1 && magic2 == KSU_INSTALL_MAGIC2) {
-		struct ksu_install_fd_tw *tw;
-		tw = kzalloc(sizeof(*tw), GFP_ATOMIC);
-		if (!tw)
-			return 0;
-		tw->outp = (int __user *)arg4;
-		tw->cb.func = ksu_install_fd_tw_func;
-		if (task_work_add(current, &tw->cb, TWA_RESUME)) {
-			kfree(tw);
-			pr_warn("reboot: install fd add task_work failed\n");
-		}
-	}
-	return 0;
-}
-static struct kprobe setaffinity_kp = {
-	.symbol_name = REBOOT_SYMBOL,
-	.pre_handler = reboot_handler_pre_susfs,
-};
-#endif // #ifdef CONFIG_KSU_SUSFS
-
 #ifndef CONFIG_KSU_SUSFS
 static int reboot_handler_pre(struct kprobe *p, struct pt_regs *regs)
 {
@@ -1165,13 +1137,6 @@ void ksu_supercalls_init(void)
 	} else {
 		pr_info("reboot kprobe registered successfully\n");
 	}
-#else
-	int rc = register_kprobe(&setaffinity_kp);
-	if (rc) {
-		pr_err("setaffinity kprobe failed: %d\n", rc);
-	} else {
-		pr_info("setaffinity kprobe registered successfully\n");
-	}
 #endif // #ifndef CONFIG_KSU_SUSFS
 
     sulog_init_heap(); // grab heap memory
@@ -1182,7 +1147,7 @@ void ksu_supercalls_exit(void)
 #ifndef CONFIG_KSU_SUSFS
     unregister_kprobe(&reboot_kp);
 #else
-    unregister_kprobe(&setaffinity_kp);
+    pr_info("susfs: do nothing\n");
 #endif // #ifndef CONFIG_KSU_SUSFS
 }
 
