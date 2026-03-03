@@ -1035,6 +1035,7 @@ static int __init ramoops_init(void)
 
 static int __init ramoops_register_minidump_late(void)
 {
+	pr_err("ramoops: late_initcall called\n");
 	register_minidump(&oops_cxt);
 	return 0;
 }
