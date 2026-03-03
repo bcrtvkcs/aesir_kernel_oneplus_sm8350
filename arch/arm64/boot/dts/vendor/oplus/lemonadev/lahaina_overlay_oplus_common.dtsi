@@ -16,20 +16,22 @@
     };
 };
 //#if IS_ENABLED(CONFIG_OPLUS_FEATURE_DUMP_DEVICE_INFO)
-ramoops: ramoops@0xE9700000 {
-    compatible = "ramoops";
-    reg = <0 0xE9700000 0 0x05B8000>;
-    record-size =  <0x40000>;
-    console-size = <0x40000>;
-    ftrace-size =  <0x200000>;
-    pmsg-size =    <0x200000>;
-    devinfo-size = <0x08000>;
-    dumpinfo-size = <0x08000>;
-    rsv01info-size = <0x08000>;
-    rsv02info-size = <0x08000>;
-    rsv03info-size = <0x08000>;
-    rsv04info-size = <0x08000>;
-    rsv05info-size = <0x08000>;
-    ecc-size =     <0x0>;
+&reserved_memory {
+    ramoops: ramoops@0xE9700000 {
+        compatible = "ramoops";
+        reg = <0 0xE9700000 0 0x05B8000>;
+        record-size =  <0x40000>;
+        console-size = <0x40000>;
+        ftrace-size =  <0x200000>;
+        pmsg-size =    <0x200000>;
+        devinfo-size = <0x08000>;
+        dumpinfo-size = <0x08000>;
+        rsv01info-size = <0x08000>;
+        rsv02info-size = <0x08000>;
+        rsv03info-size = <0x08000>;
+        rsv04info-size = <0x08000>;
+        rsv05info-size = <0x08000>;
+        ecc-size =     <0x0>;
+    };
 };
 //#endif
