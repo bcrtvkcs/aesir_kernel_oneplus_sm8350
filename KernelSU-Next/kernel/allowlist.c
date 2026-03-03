@@ -240,6 +240,7 @@ out:
                sizeof(default_non_root_profile));
     } else if (unlikely(!strcmp(profile->key, "#"))) {
         // set default root profile
+        // TODO: Do we really need this?
         memcpy(&default_root_profile, &profile->rp_config.profile,
                sizeof(default_root_profile));
     } else if (profile->current_uid <= BITMAP_UID_MAX) {
