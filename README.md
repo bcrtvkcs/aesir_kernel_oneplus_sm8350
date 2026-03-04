@@ -350,7 +350,7 @@ https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common
 
 ---
 
-# Original `Android Common Kernel README`
+# Android Common Kernel README
 
 # How do I submit patches to Android Common Kernels
 
