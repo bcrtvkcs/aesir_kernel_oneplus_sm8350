@@ -20,6 +20,8 @@ int sulog_init_heap(void)
 		return -ENOMEM;
 	
 	pr_info("sulog_init: allocated %lu bytes on 0x%p \n", SULOG_BUFSIZ, sulog_buf_ptr);
+
+	return 0;
 }
 
 void write_sulog(uint8_t sym)
