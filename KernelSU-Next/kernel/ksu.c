@@ -11,12 +11,11 @@
 #include "feature.h"
 #include "klog.h" // IWYU pragma: keep
 #include "throne_tracker.h"
-#ifndef CONFIG_KSU_SUSFS
 #include "syscall_hook_manager.h"
-#else
+#ifdef CONFIG_KSU_SUSFS
 #include "setuid_hook.h"
 #include "sucompat.h"
-#endif // #ifndef CONFIG_KSU_SUSFS
+#endif // #ifdef CONFIG_KSU_SUSFS
 #include "ksud.h"
 #include "supercalls.h"
 #include "ksu.h"
