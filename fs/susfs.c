@@ -592,8 +592,6 @@ void susfs_set_cmdline_or_bootconfig(void __user **user_info) {
 
 	spin_lock(&susfs_spin_lock_set_cmdline_or_bootconfig);
 	strscpy(fake_cmdline_or_bootconfig, info->fake_cmdline_or_bootconfig, SUSFS_FAKE_CMDLINE_OR_BOOTCONFIG_SIZE);
-			info->fake_cmdline_or_bootconfig,
-			SUSFS_FAKE_CMDLINE_OR_BOOTCONFIG_SIZE-1);
 	spin_unlock(&susfs_spin_lock_set_cmdline_or_bootconfig);
 	susfs_is_fake_cmdline_or_bootconfig_set = true;
 	SUSFS_LOGI("fake_cmdline_or_bootconfig is set\n");
@@ -1076,7 +1074,7 @@ static int susfs_sdcard_monitor_fn(void *data)
 int susfs_start_sdcard_monitor_fn(void) {
 	struct task_struct *t;
 
-	t = kthread_run(susfs_sdcard_monitor_thread, NULL, "media_monitor");
+	t = kthread_run(susfs_sdcard_monitor_fn, NULL, "media_monitor");
 	if (IS_ERR(t)) {
 		pr_err("susfs: failed to start sdcard monitor thread: %ld\n", PTR_ERR(t));
 		return PTR_ERR(t);
