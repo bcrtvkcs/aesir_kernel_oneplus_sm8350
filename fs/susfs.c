@@ -378,55 +378,75 @@ out_copy_to_user:
 }
 
 void susfs_update_sus_kstat(void __user **user_info) {
-	struct st_susfs_sus_kstat info = {0};
-	struct st_susfs_sus_kstat_hlist *new_entry, *tmp_entry;
+	struct st_susfs_sus_kstat info;
+	struct st_susfs_sus_kstat_hlist *new_entry = NULL, *tmp_entry;
+	struct st_susfs_sus_kstat saved_info;
 	struct hlist_node *tmp_node;
 	int bkt;
+	int err = 0;
+	bool found = false;
 
-	if (copy_from_user(&info, (struct st_susfs_sus_kstat __user*)*user_info, sizeof(info))) {
+	if (copy_from_user(&info, *user_info, sizeof(info))) {
+		SUSFS_LOGE("failed copying from userspace\n");
 		info.err = -EFAULT;
 		goto out_copy_to_user;
 	}
 
+	/* First pass: find the matching entry under lock and save its data */
+	spin_lock(&susfs_spin_lock_sus_kstat);
 	hash_for_each_safe(SUS_KSTAT_HLIST, bkt, tmp_node, tmp_entry, node) {
 		if (!strcmp(tmp_entry->info.target_pathname, info.target_pathname)) {
-			info.err = susfs_update_sus_kstat_inode(tmp_entry->info.target_pathname);
-			if (info.err) {
-				goto out_copy_to_user;
-			}
-			new_entry = kmalloc(sizeof(struct st_susfs_sus_kstat_hlist), GFP_KERNEL);
-			if (!new_entry) {
-				info.err = -ENOMEM;
-				goto out_copy_to_user;
-			}
-			memcpy(&new_entry->info, &tmp_entry->info, sizeof(tmp_entry->info));
-			SUSFS_LOGI("updating target_ino from '%lu' to '%lu' for pathname: '%s' in SUS_KSTAT_HLIST\n",
-							new_entry->info.target_ino, info.target_ino, info.target_pathname);
-			new_entry->target_ino = info.target_ino;
-			new_entry->info.target_ino = info.target_ino;
-			if (info.spoofed_size > 0) {
-				SUSFS_LOGI("updating spoofed_size from '%lld' to '%lld' for pathname: '%s' in SUS_KSTAT_HLIST\n",
-								new_entry->info.spoofed_size, info.spoofed_size, info.target_pathname);
-				new_entry->info.spoofed_size = info.spoofed_size;
-			}
-			if (info.spoofed_blocks > 0) {
-				SUSFS_LOGI("updating spoofed_blocks from '%llu' to '%llu' for pathname: '%s' in SUS_KSTAT_HLIST\n",
-								new_entry->info.spoofed_blocks, info.spoofed_blocks, info.target_pathname);
-				new_entry->info.spoofed_blocks = info.spoofed_blocks;
-			}
-			hash_del(&tmp_entry->node);
-			kfree(tmp_entry);
-			spin_lock(&susfs_spin_lock_sus_kstat);
-			hash_add(SUS_KSTAT_HLIST, &new_entry->node, info.target_ino);
-			spin_unlock(&susfs_spin_lock_sus_kstat);
-			info.err = 0;
-			goto out_copy_to_user;
+			memcpy(&saved_info, &tmp_entry->info, sizeof(tmp_entry->info));
+			found = true;
+			break;
 		}
 	}
-out_copy_to_user:
-	if (copy_to_user(&((struct st_susfs_sus_kstat __user*)*user_info)->err, &info.err, sizeof(info.err))) {
-		info.err = -EFAULT;
+	spin_unlock(&susfs_spin_lock_sus_kstat);
+
+	if (!found)
+		goto out_set_err;
+
+	/* Sleeping operations outside spinlock */
+	if (susfs_update_sus_kstat_inode(saved_info.target_pathname)) {
+		err = 1;
+		goto out_set_err;
 	}
+	new_entry = kmalloc(sizeof(struct st_susfs_sus_kstat_hlist), GFP_KERNEL);
+	if (!new_entry) {
+		SUSFS_LOGE("no enough memory\n");
+		err = 1;
+		goto out_set_err;
+	}
+	memcpy(&new_entry->info, &saved_info, sizeof(saved_info));
+	SUSFS_LOGI("updating target_ino from '%lu' to '%lu' for pathname: '%s' in SUS_KSTAT_HLIST\n",
+					new_entry->info.target_ino, info.target_ino, info.target_pathname);
+	new_entry->target_ino = info.target_ino;
+	new_entry->info.target_ino = info.target_ino;
+	if (info.spoofed_size > 0) {
+		new_entry->info.spoofed_size = info.spoofed_size;
+	}
+	if (info.spoofed_blocks > 0) {
+		new_entry->info.spoofed_blocks = info.spoofed_blocks;
+	}
+
+	/* Second pass: remove old entry and add new one under lock */
+	spin_lock(&susfs_spin_lock_sus_kstat);
+	hash_for_each_safe(SUS_KSTAT_HLIST, bkt, tmp_node, tmp_entry, node) {
+		if (!strcmp(tmp_entry->info.target_pathname, info.target_pathname)) {
+			hash_del(&tmp_entry->node);
+			kfree(tmp_entry);
+			break;
+		}
+	}
+	hash_add(SUS_KSTAT_HLIST, &new_entry->node, info.target_ino);
+	spin_unlock(&susfs_spin_lock_sus_kstat);
+
+out_set_err:
+	info.err = err;
+
+out_copy_to_user:
+	if (copy_to_user(&((struct st_susfs_sus_kstat __user *)*user_info)->err, &info.err, sizeof(info.err)))
+		SUSFS_LOGE("copy_to_user() failed\n");
 	SUSFS_LOGI("CMD_SUSFS_UPDATE_SUS_KSTAT -> ret: %d\n", info.err);
 }
 
