@@ -11,7 +11,7 @@
 
 #define KSUD_PATH "/data/adb/ksud"
 
-void ksu_ksud_init();
+int ksu_ksud_init(void);
 void ksu_ksud_exit();
 
 void on_post_fs_data(void);

@@ -695,7 +695,7 @@ static void stop_input_hook()
 }
 
 // ksud: module support
-void ksu_ksud_init()
+int ksu_ksud_init(void)
 {
 #ifndef CONFIG_KSU_SUSFS
 	int ret;
@@ -716,6 +716,8 @@ void ksu_ksud_init()
 	INIT_WORK(&stop_execve_hook_work, do_stop_execve_hook);
 	INIT_WORK(&stop_input_hook_work, do_stop_input_hook);
 #endif // #ifndef CONFIG_KSU_SUSFS
+
+	return 0;
 }
 
 void ksu_ksud_exit()

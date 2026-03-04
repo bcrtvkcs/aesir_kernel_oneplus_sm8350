@@ -147,7 +147,7 @@ out:
 	return ret;
 }
 
-void ksu_feature_init(void)
+int ksu_feature_init(void)
 {
 	int i;
 

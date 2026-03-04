@@ -1073,21 +1073,24 @@ static int susfs_sdcard_monitor_fn(void *data)
 	return 0;
 }
 
-void susfs_start_sdcard_monitor_fn(void) {
-	if (IS_ERR(kthread_run(susfs_sdcard_monitor_fn, NULL, "susfs_sdcard_monitor"))) {
-		SUSFS_LOGE("failed to create thread susfs_sdcard_monitor\n");
-		SUSFS_LOGI("set susfs_is_sdcard_android_data_decrypted to true\n");
-		susfs_is_sdcard_android_data_decrypted = true;
+int susfs_start_sdcard_monitor_fn(void) {
+	struct task_struct *t;
+
+	t = kthread_run(susfs_sdcard_monitor_thread, NULL, "media_monitor");
+	if (IS_ERR(t)) {
+		pr_err("susfs: failed to start sdcard monitor thread: %ld\n", PTR_ERR(t));
+		return PTR_ERR(t);
 	}
+	return 0;
 }
 
 /* susfs_init */
-void susfs_init(void) {
+int susfs_init(void) {
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
 	susfs_my_uname_init();
 #endif
-
 	SUSFS_LOGI("susfs is initialized! version: " SUSFS_VERSION " \n");
+	return 0;
 }
 
 /* No module exit is needed becuase it should never be a loadable kernel module */

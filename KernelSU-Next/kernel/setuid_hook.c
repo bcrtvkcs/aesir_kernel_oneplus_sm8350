@@ -161,9 +161,11 @@ do_umount:
 }
 #endif // #ifndef CONFIG_KSU_SUSFS
 
-void ksu_setuid_hook_init(void)
+int ksu_setuid_hook_init(void)
 {
     ksu_kernel_umount_init();
+
+    return 0;
 }
 
 void ksu_setuid_hook_exit(void)
