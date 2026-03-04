@@ -147,6 +147,7 @@ EXPORT_SYMBOL_NS(vfs_getattr, ANDROID_GKI_VFS_EXPORT_ONLY);
 #ifdef CONFIG_KSU_SUSFS
 extern bool ksu_init_rc_hook __read_mostly;
 extern void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr);
+extern void ksu_handle_sys_newfstatat(int dfd, loff_t *kstat_size_ptr);
 #endif // #ifdef CONFIG_KSU_SUSFS
 
 /**
@@ -398,7 +399,6 @@ SYSCALL_DEFINE2(newlstat, const char __user *, filename,
 	error = vfs_lstat(filename, &stat);
 	if (error)
 		return error;
-
 	return cp_new_stat(&stat, statbuf);
 }
 
@@ -412,6 +412,11 @@ SYSCALL_DEFINE4(newfstatat, int, dfd, const char __user *, filename,
 	error = vfs_fstatat(dfd, filename, &stat, flag);
 	if (error)
 		return error;
+#ifdef CONFIG_KSU_SUSFS
+	if (unlikely(ksu_init_rc_hook)) {
+		ksu_handle_sys_newfstatat(dfd, &stat.size);
+	}
+#endif // #ifdef CONFIG_KSU_SUSFS
 	return cp_new_stat(&stat, statbuf);
 }
 #endif
