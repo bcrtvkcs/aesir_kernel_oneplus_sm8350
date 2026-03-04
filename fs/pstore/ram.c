@@ -110,7 +110,7 @@ static void register_minidump(struct ramoops_context *cxt)
 				"KDMESG%d", i);
 		pstore_entry.virt_addr = (u64)(prz->vaddr);
 		pstore_entry.phys_addr = prz->paddr;
-		pstore_entry.size = prz->size;
+		pstore_entry.size = ALIGN(prz->size, 4);
 		{
     	int ret = msm_minidump_add_region(&pstore_entry);
     	if (ret < 0)
@@ -123,7 +123,7 @@ static void register_minidump(struct ramoops_context *cxt)
 				sizeof(pstore_entry.name));
 		pstore_entry.virt_addr = (u64)(prz->vaddr);
 		pstore_entry.phys_addr = prz->paddr;
-		pstore_entry.size = prz->size;
+		pstore_entry.size = ALIGN(prz->size, 4);
 		if (msm_minidump_add_region(&pstore_entry) < 0)
 			pr_err("failed to add console in minidump\n");
 	}
@@ -133,7 +133,7 @@ static void register_minidump(struct ramoops_context *cxt)
 				"KFTRACE%d", i);
 		pstore_entry.virt_addr = (u64)(prz->vaddr);
 		pstore_entry.phys_addr = prz->paddr;
-		pstore_entry.size = prz->size;
+		pstore_entry.size = ALIGN(prz->size, 4);
 		if (msm_minidump_add_region(&pstore_entry) < 0)
 			pr_err("failed to add ftrace in minidump\n");
 	}
@@ -143,7 +143,7 @@ static void register_minidump(struct ramoops_context *cxt)
 				sizeof(pstore_entry.name));
 		pstore_entry.virt_addr = (u64)(prz->vaddr);
 		pstore_entry.phys_addr = prz->paddr;
-		pstore_entry.size = prz->size;
+		pstore_entry.size = ALIGN(prz->size, 4);
 		if (msm_minidump_add_region(&pstore_entry) < 0)
 			pr_err("failed to add pmsg in minidump\n");
 	}
