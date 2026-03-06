@@ -30,7 +30,7 @@ Stock crDroid kernel does not include the newest KernelSU Next or the newest roo
 
 ## Solution
 
-This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) v3.0.1 and [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) v2.0.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.7 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through **9 inline syscall hooks** hand-placed in kernel source files - making detection significantly harder. SuSFS hides all root artifacts (paths, mounts, maps, kernel symbols) while SELinux remains Enforcing and Play Integrity passes at DEVICE level.
+This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) v3.1.0 and [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) v2.0.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.7 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through **9 inline syscall hooks** hand-placed in kernel source files - making detection significantly harder. SuSFS hides all root artifacts (paths, mounts, maps, kernel symbols) while SELinux remains Enforcing and Play Integrity passes at DEVICE level.
 
 ## Installation
 
@@ -76,7 +76,7 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 | **ROM** | crDroid 12.7 (Android 16) (latest) |
 | **Device** | OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade) |
 | **SoC** | Qualcomm Snapdragon 888 (SM8350/Lahaina) |
-| **KernelSU Next** | v3.0.1 (version code 33006) |
+| **KernelSU Next** | v3.1.0 (version code 33006) |
 | **SuSFS** | v2.0.0 |
 | **SELinux** | Enforcing |
 | **Hook Mode** | GKI1 - Inline (manual) syscall hooks |
@@ -313,21 +313,27 @@ repo sync → edit local_manifests to use your kernel fork → repo sync → bru
 
 There is no need to compile the kernel separately - `brunch` handles everything.
 
-## Upstreamed crDroid Android Repos
+## Upstreamed Repos
 
-### OnePlus 9 Pro (lemonadep) repos:
-https://github.com/crdroidandroid/android_device_oneplus_lemonadep
-https://github.com/crdroidandroid/android_device_oneplus_sm8350-common
-https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep
-https://github.com/crdroidandroid/android_hardware_oplus
-https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common
+**crDroid Android:**
 
-### OnePlus 9 (lemonade) repos:
-https://github.com/crdroidandroid/android_device_oneplus_lemonade
-https://github.com/crdroidandroid/android_device_oneplus_sm8350-common
-https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade
-https://github.com/crdroidandroid/android_hardware_oplus
-https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common
+**OnePlus 9 Pro (lemonadep) repos:**
+[android_device_oneplus_lemonadep](https://github.com/crdroidandroid/android_device_oneplus_lemonadep)
+[android_device_oneplus_sm8350-common](https://github.com/crdroidandroid/android_device_oneplus_sm8350-common)
+[proprietary_vendor_oneplus-lemonadep](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep)
+[android_hardware_oplus](https://github.com/crdroidandroid/android_hardware_oplus)
+[proprietary_vendor_oneplus_sm8350-common](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common)
+
+**OnePlus 9 (lemonade) repos:**
+[android_device_oneplus_lemonade](https://github.com/crdroidandroid/android_device_oneplus_lemonade)
+[android_device_oneplus_sm8350-common](https://github.com/crdroidandroid/android_device_oneplus_sm8350-common)
+[proprietary_vendor_oneplus_lemonade](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade)
+[android_hardware_oplus](https://github.com/crdroidandroid/android_hardware_oplus)
+[proprietary_vendor_oneplus_sm8350-common](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common)
+
+[KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next)
+
+[SuSFS](https://gitlab.com/bcrtvkcs/susfs4ksu)
 
 ## Credits
 
