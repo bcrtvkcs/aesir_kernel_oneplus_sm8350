@@ -327,7 +327,7 @@ There is no need to compile the kernel separately - `brunch` handles everything.
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonadep">android_device_oneplus_lemonadep</a></td>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonade">android_device_oneplus_lemonade</a></td>
-      <td rowspan="2" align="center"><br><a href="https://github.com/bcrtvkcs/KernelSU-Next">KernelSU Next repo</a></td>
+      <td rowspan="2" align="center" valign="middle"><a href="https://github.com/bcrtvkcs/KernelSU-Next">KernelSU Next repo</a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_sm8350-common">android_device_oneplus_sm8350-common</a></td>
@@ -336,7 +336,7 @@ There is no need to compile the kernel separately - `brunch` handles everything.
     <tr>
       <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep">proprietary_vendor_oneplus-lemonadep</a></td>
       <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade">proprietary_vendor_oneplus_lemonade</a></td>
-      <td rowspan="3" align="center"><br><br><a href="https://gitlab.com/bcrtvkcs/susfs4ksu">SuSFS repo</a></td>
+      <td rowspan="3" align="center" valign="middle"><a href="https://gitlab.com/bcrtvkcs/susfs4ksu">SuSFS repo</a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_hardware_oplus">android_hardware_oplus</a></td>
