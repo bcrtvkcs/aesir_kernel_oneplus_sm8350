@@ -405,7 +405,7 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
 		}
 #endif
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-bypass_orig_flow:
+bypass_orig_flow:;
 #endif
 	}
 
@@ -986,7 +986,7 @@ static void show_smap_vma(struct seq_file *m, void *v)
 	smap_gather_stats(vma, &mss);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MAP
-bypass_orig_flow:
+bypass_orig_flow:;
 #endif
 	show_map_vma(m, vma);
 	if (vma_get_anon_name(vma)) {
