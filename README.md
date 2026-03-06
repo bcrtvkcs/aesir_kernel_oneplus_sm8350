@@ -307,9 +307,7 @@ or
 
 #### Summary Flow
 
-```
-repo sync → edit local_manifests to use your kernel fork → repo sync → brunch lemonadep or brunch lemonade
-```
+repo sync **→** edit local_manifests to use your kernel fork **→** repo sync **→** brunch lemonadep or brunch lemonade
 
 There is no need to compile the kernel separately - `brunch` handles everything.
 
