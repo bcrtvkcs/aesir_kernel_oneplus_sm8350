@@ -94,10 +94,24 @@ static void show_type(struct seq_file *m, struct super_block *sb)
 	}
 }
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+#include <linux/susfs_def.h>
+extern bool susfs_hide_sus_mnts_for_non_su_procs;
+extern bool susfs_is_current_ksu_domain(void);
+#endif
+
 static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (susfs_hide_sus_mnts_for_non_su_procs &&
+			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
+			!susfs_is_current_ksu_domain())
+	{
+		return 0;
+	}
+#endif
 	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
 	struct super_block *sb = mnt_path.dentry->d_sb;
 	int err;
@@ -135,6 +149,14 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (susfs_hide_sus_mnts_for_non_su_procs &&
+			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
+			!susfs_is_current_ksu_domain())
+	{
+		return 0;
+	}
+#endif
 	struct super_block *sb = mnt->mnt_sb;
 	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
 	int err;
@@ -199,6 +221,14 @@ static int show_vfsstat(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (susfs_hide_sus_mnts_for_non_su_procs &&
+			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
+			!susfs_is_current_ksu_domain())
+	{
+		return 0;
+	}
+#endif
 	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
 	struct super_block *sb = mnt_path.dentry->d_sb;
 	int err;

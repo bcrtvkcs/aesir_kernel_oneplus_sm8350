@@ -21,10 +21,13 @@
 #if defined(CONFIG_PROC_FS)
 
 #if defined(CONFIG_INOTIFY_USER) || defined(CONFIG_FANOTIFY)
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+#include <linux/susfs_def.h>
+#endif
 
 static void show_fdinfo(struct seq_file *m, struct file *f,
 			void (*show)(struct seq_file *m,
-				     struct fsnotify_mark *mark))
+				     struct fsnotify_mark *mark, struct file *file))
 {
 	struct fsnotify_group *group = f->private_data;
 	struct fsnotify_mark *mark;
@@ -73,7 +76,7 @@ static void show_mark_fhandle(struct seq_file *m, struct inode *inode)
 
 #ifdef CONFIG_INOTIFY_USER
 
-static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark, struct file *file)
 {
 	struct inotify_inode_mark *inode_mark;
 	struct inode *inode;
@@ -83,6 +86,48 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
 
 	inode_mark = container_of(mark, struct inotify_inode_mark, fsn_mark);
 	inode = igrab(fsnotify_conn_inode(mark->connector));
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (inode) {
+		struct mount *mnt = NULL;
+		mnt = real_mount(file->f_path.mnt);
+		if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID &&
+			likely(susfs_is_current_proc_umounted_app()))
+		{
+			struct path path;
+			char *pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
+			char *dpath;
+			if (!pathname) {
+				goto orig_flow;
+			}
+			dpath = d_path(&file->f_path, pathname, PAGE_SIZE);
+			if (!dpath) {
+				kfree(pathname);
+				goto orig_flow;
+			}
+			if (kern_path(dpath, 0, &path)) {
+				kfree(pathname);
+				goto orig_flow;
+			}
+			seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
+				inode_mark->wd, path.dentry->d_inode->i_ino, path.dentry->d_inode->i_sb->s_dev,
+				inotify_mark_user_mask(mark));
+			show_mark_fhandle(m, path.dentry->d_inode);
+			seq_putc(m, '\n');
+			path_put(&path);
+			kfree(pathname);
+			iput(inode);
+			return;
+		}
+		orig_flow:
+		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
+			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
+			   inotify_mark_user_mask(mark));
+		show_mark_fhandle(m, inode);
+		seq_putc(m, '\n');
+		iput(inode);
+	}
+}
+#else
 	if (inode) {
 		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
 			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
@@ -92,6 +137,7 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
 		iput(inode);
 	}
 }
+#endif
 
 void inotify_show_fdinfo(struct seq_file *m, struct file *f)
 {
