@@ -154,4 +154,4 @@ arch/arm/boot/dts/vendor
 #
 Android.bp
 
-/KernelSU-Next/.git
+KernelSU-Next/.git
