@@ -148,7 +148,7 @@ void inotify_show_fdinfo(struct seq_file *m, struct file *f)
 
 #ifdef CONFIG_FANOTIFY
 
-static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark)
+static void fanotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark, struct file *file)
 {
 	unsigned int mflags = 0;
 	struct inode *inode;

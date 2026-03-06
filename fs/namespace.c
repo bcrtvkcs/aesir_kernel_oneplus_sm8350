@@ -39,6 +39,8 @@ extern bool susfs_is_current_ksu_domain(void);
 extern bool susfs_is_current_zygote_domain(void);
 extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 #define CL_COPY_MNT_NS BIT(25)
+static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name);
+static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name);
 #endif
 
 /* Maximum number of mounts in a mount namespace */
@@ -3548,9 +3550,6 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	struct mount *old;
 	struct mount *new;
 	int copy_flags;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	copy_flags |= CL_COPY_MNT_NS;
-#endif
 
 	BUG_ON(!ns);
 
@@ -3570,6 +3569,9 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	copy_flags = CL_COPY_UNBINDABLE | CL_EXPIRE;
 	if (user_ns != ns->user_ns)
 		copy_flags |= CL_SHARED_TO_SLAVE;
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	copy_flags |= CL_COPY_MNT_NS;
+#endif
 	new = copy_tree(old, old->mnt.mnt_root, copy_flags);
 	if (IS_ERR(new)) {
 		namespace_unlock();
