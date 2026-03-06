@@ -315,25 +315,39 @@ There is no need to compile the kernel separately - `brunch` handles everything.
 
 ## Upstreamed Repos
 
-**crDroid Android:**
-
-**OnePlus 9 Pro (lemonadep) repos:**
-[android_device_oneplus_lemonadep](https://github.com/crdroidandroid/android_device_oneplus_lemonadep)
-[android_device_oneplus_sm8350-common](https://github.com/crdroidandroid/android_device_oneplus_sm8350-common)
-[proprietary_vendor_oneplus-lemonadep](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep)
-[android_hardware_oplus](https://github.com/crdroidandroid/android_hardware_oplus)
-[proprietary_vendor_oneplus_sm8350-common](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common)
-
-**OnePlus 9 (lemonade) repos:**
-[android_device_oneplus_lemonade](https://github.com/crdroidandroid/android_device_oneplus_lemonade)
-[android_device_oneplus_sm8350-common](https://github.com/crdroidandroid/android_device_oneplus_sm8350-common)
-[proprietary_vendor_oneplus_lemonade](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade)
-[android_hardware_oplus](https://github.com/crdroidandroid/android_hardware_oplus)
-[proprietary_vendor_oneplus_sm8350-common](https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common)
-
-[KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next)
-
-[SuSFS](https://gitlab.com/bcrtvkcs/susfs4ksu)
+<table>
+  <thead>
+    <tr>
+      <th>OnePlus 9 Pro (lemonadep) Repos</th>
+      <th>OnePlus 9 (lemonade) Repos</th>
+      <th>KernelSU Next & SuSFS Repos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonadep">android_device_oneplus_lemonadep</a></td>
+      <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonade">android_device_oneplus_lemonade</a></td>
+      <td rowspan="2" align="center"><br><a href="https://github.com/bcrtvkcs/KernelSU-Next">KernelSU Next repo</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/crdroidandroid/android_device_oneplus_sm8350-common">android_device_oneplus_sm8350-common</a></td>
+      <td><a href="https://github.com/crdroidandroid/android_device_oneplus_sm8350-common">android_device_oneplus_sm8350-common</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep">proprietary_vendor_oneplus-lemonadep</a></td>
+      <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade">proprietary_vendor_oneplus_lemonade</a></td>
+      <td rowspan="3" align="center"><br><br><a href="https://gitlab.com/bcrtvkcs/susfs4ksu">SuSFS repo</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://github.com/crdroidandroid/android_hardware_oplus">android_hardware_oplus</a></td>
+      <td><a href="https://github.com/crdroidandroid/android_hardware_oplus">android_hardware_oplus</a></td>
+    </tr>
+    <tr>
+      <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common">proprietary_vendor_oneplus_sm8350-common</a></td>
+      <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_sm8350-common">proprietary_vendor_oneplus_sm8350-common</a></td>
+    </tr>
+  </tbody>
+</table>
 
 ## Credits
 
