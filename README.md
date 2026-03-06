@@ -4,7 +4,7 @@
   <img src="https://i.imgur.com/lfo6Z8h.png?raw=true" alt="ÆSIR Header Image"/>
 </p>
 
-ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-crdroid-android-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.0.1** + **SuSFS v2.0.0** integrated directly into the kernel source.
+ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.0.1** + **SuSFS v2.0.0** integrated directly into the kernel source.
 
 Follow this link to join the [Telegram channel](https://t.me/aesirkernel)
 
@@ -43,11 +43,11 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
 6. Install the [BRENE module](https://github.com/rrr333nnn333/BRENE) by rrr333nnn333 from within the manager to control SuSFS features.
 
-> In step 5, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
+> In step 6, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
 
 > If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 0 (default) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
 
-> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-crdroid-android-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### Instructions for **OnePlus 9 (lemonade)**
 
@@ -58,13 +58,13 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
 6. Install the [BRENE module](https://github.com/rrr333nnn333/BRENE) by rrr333nnn333 from within the manager to control SuSFS features.
 
-> In step 5, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
+> In step 6, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
 
 > If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 0 (default) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
 
 > I can't test the OnePlus 9 (lemonade)'s prebuilt zip because I don't have the device. It probably works fine, but there might be something I don't know about. Just in case. If you would like to test it and share your results, I would be appriciate it. If you encounter a bug or want to have a feature request, [please let me know](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/issues).
 
-> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-crdroid-android-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### If you'd like to support the project, feel free to leave a star ⭐
 
@@ -102,7 +102,7 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 | ~~Magic Mount Support~~ | Deprecated |
 | ~~OverlayFS Auto Kstat Support~~ | Deprecated |
 
-> **Deprecated features:** SuSFS v2.0.0 intentionally removed the legacy per-mount management features (try_umount, auto mounts, magic mount, overlayfs auto kstat). These have been replaced by a single unified **SUS Mount Support** mechanism (`hide_sus_mnts_for_non_su_procs`) that hides all suspicious mounts from non-root processes at once - simpler configuration, smaller attack surface, same result.
+> **Deprecated features:** SuSFS v2.0.0 intentionally removed the legacy per-mount management features (try_umount, auto mounts, magic mount, overlayfs auto kstat). These have been replaced by a single unified **SUS Mount Support** mechanism `hide_sus_mnts_for_non_su_procs` that hides all suspicious mounts from non-root processes at once - simpler configuration, smaller attack surface, same result.
 
 ### Inline Syscall Hooks
 
