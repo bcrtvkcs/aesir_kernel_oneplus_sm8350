@@ -104,6 +104,9 @@ static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
+	struct super_block *sb = mnt_path.dentry->d_sb;
+	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	if (susfs_hide_sus_mnts_for_non_su_procs &&
 			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
@@ -112,9 +115,6 @@ static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
 		return 0;
 	}
 #endif
-	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
-	struct super_block *sb = mnt_path.dentry->d_sb;
-	int err;
 
 
 	if (sb->s_op->show_devname) {
@@ -149,6 +149,9 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+	struct super_block *sb = mnt->mnt_sb;
+	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
+	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	if (susfs_hide_sus_mnts_for_non_su_procs &&
 			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
@@ -157,9 +160,6 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 		return 0;
 	}
 #endif
-	struct super_block *sb = mnt->mnt_sb;
-	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
-	int err;
 
 	seq_printf(m, "%i %i %u:%u ", r->mnt_id, r->mnt_parent->mnt_id,
 		   MAJOR(sb->s_dev), MINOR(sb->s_dev));
@@ -221,6 +221,9 @@ static int show_vfsstat(struct seq_file *m, struct vfsmount *mnt)
 {
 	struct proc_mounts *p = m->private;
 	struct mount *r = real_mount(mnt);
+	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
+	struct super_block *sb = mnt_path.dentry->d_sb;
+	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	if (susfs_hide_sus_mnts_for_non_su_procs &&
 			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
@@ -229,9 +232,6 @@ static int show_vfsstat(struct seq_file *m, struct vfsmount *mnt)
 		return 0;
 	}
 #endif
-	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
-	struct super_block *sb = mnt_path.dentry->d_sb;
-	int err;
 
 
 	/* device */
