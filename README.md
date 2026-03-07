@@ -121,7 +121,7 @@ Instead of using kprobes (which can be detected), ÆSIR Kernel uses **9 inline h
 
 ## Performance Optimizations
 
-ÆSIR Kernel includes a comprehensive set of performance and battery life optimizations applied directly at the source level - no Magisk modules or post-boot scripts required. All tweaks are active from the moment the kernel boots.
+ÆSIR Kernel includes a comprehensive set of performance and battery life optimizations applied directly at the source level - no modules or post-boot scripts required. All tweaks are active from the moment the kernel boots.
 
 ### Network & I/O
 
