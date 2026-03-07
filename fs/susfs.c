@@ -1080,3 +1080,13 @@ void susfs_init(void) {
 /* No module exit is needed becuase it should never be a loadable kernel module */
 //void __init susfs_exit(void)
 
+
+#ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+/* susfs_try_umount - deprecated in v2.0.0, stub for compatibility */
+void susfs_try_umount(uid_t uid) {}
+#endif
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+/* susfs_reorder_mnt_id - deprecated in v2.0.0, stub for compatibility */
+void susfs_reorder_mnt_id(void) {}
+#endif
