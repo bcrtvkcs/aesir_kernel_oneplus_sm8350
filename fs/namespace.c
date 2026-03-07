@@ -39,8 +39,11 @@ extern bool susfs_is_current_ksu_domain(void);
 extern bool susfs_is_current_zygote_domain(void);
 extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 #define CL_COPY_MNT_NS BIT(25)
-static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name);
+static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id);
 static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name);
+
+static DEFINE_IDA(susfs_mnt_id_ida);
+static DEFINE_IDA(susfs_mnt_group_ida);
 #endif
 
 /* Maximum number of mounts in a mount namespace */
@@ -132,6 +135,15 @@ static int mnt_alloc_id(struct mount *mnt)
 
 static void mnt_free_id(struct mount *mnt)
 {
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
+		return;
+	}
+	if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
+		return;
+	}
+#endif
 	ida_free(&mnt_id_ida, mnt->mnt_id);
 }
 
@@ -144,7 +156,7 @@ static int mnt_alloc_group_id(struct mount *mnt)
 	int res;
 
 	if (susfs_is_current_ksu_domain()) {
-		res = ida_alloc_min(&mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
+		res = ida_alloc_min(&susfs_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
 		goto bypass_orig_flow;
 	}
 
@@ -165,6 +177,13 @@ bypass_orig_flow:
  */
 void mnt_release_group_id(struct mount *mnt)
 {
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (mnt->mnt_group_id >= DEFAULT_KSU_MNT_GROUP_ID) {
+		ida_free(&susfs_mnt_group_ida, mnt->mnt_group_id);
+		mnt->mnt_group_id = 0;
+		return;
+	}
+#endif
 	ida_free(&mnt_group_ida, mnt->mnt_group_id);
 	mnt->mnt_group_id = 0;
 }
@@ -1064,19 +1083,15 @@ vfs_submount(const struct dentry *mountpoint, struct file_system_type *type,
 EXPORT_SYMBOL_GPL(vfs_submount);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name)
+static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id)
 {
 	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
-	int res;
 	if (mnt) {
-		res = ida_alloc_min(&mnt_id_ida, DEFAULT_UNSHARE_KSU_MNT_ID, GFP_KERNEL);
-		if (res < 0)
-			goto out_free_cache;
-		mnt->mnt_id = res;
+		mnt->mnt_id = old_mnt_id;
 		if (name) {
 			mnt->mnt_devname = kstrdup_const(name, GFP_KERNEL_ACCOUNT);
 			if (!mnt->mnt_devname)
-				goto out_free_id;
+				goto out_free_cache;
 		}
 #ifdef CONFIG_SMP
 		mnt->mnt_pcp = alloc_percpu(struct mnt_pcp);
@@ -1102,8 +1117,6 @@ static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name)
 out_free_devname:
 	kfree_const(mnt->mnt_devname);
 #endif
-out_free_id:
-	mnt_free_id(mnt);
 out_free_cache:
 	kmem_cache_free(mnt_cache, mnt);
 	return NULL;
@@ -1114,7 +1127,7 @@ static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name)
 	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
 	int res;
 	if (mnt) {
-		res = ida_alloc_min(&mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+		res = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
 		if (res < 0)
 			goto out_free_cache;
 		mnt->mnt_id = res;
@@ -1161,14 +1174,16 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 	struct super_block *sb = old->mnt.mnt_sb;
 	struct mount *mnt;
 	int err;
-
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	bool is_mnt_ksu_unshared = false;
+
 	if (susfs_is_sdcard_android_data_decrypted) {
 		goto skip_checking_for_ksu_proc;
 	}
 	if (susfs_is_current_ksu_domain()) {
 		if (flag & CL_COPY_MNT_NS) {
-			mnt = susfs_alloc_unshare_ksu_vfsmnt(old->mnt_devname);
+			mnt = susfs_alloc_unshare_ksu_vfsmnt(old->mnt_devname, old->mnt_id);
+			is_mnt_ksu_unshared = true;
 			goto bypass_orig_flow;
 		}
 		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(old->mnt_devname);
@@ -1208,6 +1223,11 @@ bypass_orig_flow:
 
 	mnt->mnt.mnt_flags = old->mnt.mnt_flags;
 	mnt->mnt.mnt_flags &= ~(MNT_WRITE_HOLD|MNT_MARKED|MNT_INTERNAL);
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (unlikely(is_mnt_ksu_unshared)) {
+		mnt->mnt.mnt_flags |= VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT;
+	}
+#endif
 
 	atomic_inc(&sb->s_active);
 	mnt->mnt.mnt_sb = sb;
