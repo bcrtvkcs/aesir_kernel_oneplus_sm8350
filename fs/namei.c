@@ -3367,13 +3367,13 @@ static int _lookup_open(struct nameidata *nd, struct path *path,
 	int error, create_error = 0;
 	umode_t mode = op->mode;
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
-
-	if (unlikely(IS_DEADDIR(dir_inode)))
-		return -ENOENT;
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	bool found_sus_path = false;
 	bool is_nd_flags_open_last;
 #endif
+
+	if (unlikely(IS_DEADDIR(dir_inode)))
+		return -ENOENT;
 
 	file->f_mode &= ~FMODE_CREATED;
 	dentry = d_lookup(dir, &nd->last);
@@ -3523,10 +3523,10 @@ static int do_last(struct nameidata *nd,
 	unsigned seq;
 	struct inode *inode;
 	struct path path;
+	int error;
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	nd->flags |= ND_FLAGS_OPEN_LAST;
 #endif
-	int error;
 
 	nd->flags &= ~LOOKUP_PARENT;
 	nd->flags |= op->intent;
