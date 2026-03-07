@@ -3339,6 +3339,12 @@ static int atomic_open(struct nameidata *nd, struct dentry *dentry,
  *
  * An error code is returned on failure.
  */
+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+static int _lookup_open(struct nameidata *nd, struct path *path,
+			struct file *file,
+			const struct open_flags *op,
+			bool got_write);
+#endif
 static int lookup_open(struct nameidata *nd, struct path *path,
 			struct file *file,
 			const struct open_flags *op,
@@ -3364,12 +3370,12 @@ static int _lookup_open(struct nameidata *nd, struct path *path,
 
 	if (unlikely(IS_DEADDIR(dir_inode)))
 		return -ENOENT;
-
-	file->f_mode &= ~FMODE_CREATED;
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	bool found_sus_path = false;
 	bool is_nd_flags_open_last;
 #endif
+
+	file->f_mode &= ~FMODE_CREATED;
 	dentry = d_lookup(dir, &nd->last);
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	is_nd_flags_open_last = (nd->flags & ND_FLAGS_OPEN_LAST);
@@ -3516,10 +3522,10 @@ static int do_last(struct nameidata *nd,
 	int acc_mode = op->acc_mode;
 	unsigned seq;
 	struct inode *inode;
+	struct path path;
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	nd->flags |= ND_FLAGS_OPEN_LAST;
 #endif
-	struct path path;
 	int error;
 
 	nd->flags &= ~LOOKUP_PARENT;

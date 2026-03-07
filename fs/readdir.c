@@ -265,14 +265,14 @@ static int filldir(struct dir_context *ctx, const char *name, int namlen,
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	inode = ilookup(buf->sb, ino);
 	if (!inode) {
-		goto orig_flow;
+		goto orig_flow_fillonedir;
 	}
 	if (susfs_is_inode_sus_path(inode)) {
 		iput(inode);
 		return true;
 	}
 	iput(inode);
-orig_flow:
+orig_flow_fillonedir:
 #endif
 	prev_reclen = buf->prev_reclen;
 	if (prev_reclen && signal_pending(current))
@@ -281,14 +281,14 @@ orig_flow:
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	inode = ilookup(buf->sb, ino);
 	if (!inode) {
-		goto orig_flow;
+		goto orig_flow_filldir;
 	}
 	if (susfs_is_inode_sus_path(inode)) {
 		iput(inode);
 		return true;
 	}
 	iput(inode);
-orig_flow:
+orig_flow_filldir:
 #endif
 	dirent = buf->current_dir;
 	prev = (void __user *) dirent - prev_reclen;
@@ -389,14 +389,14 @@ static int filldir64(struct dir_context *ctx, const char *name, int namlen,
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 	inode = ilookup(buf->sb, ino);
 	if (!inode) {
-		goto orig_flow;
+		goto orig_flow_filldir64;
 	}
 	if (susfs_is_inode_sus_path(inode)) {
 		iput(inode);
 		return true;
 	}
 	iput(inode);
-orig_flow:
+orig_flow_filldir64:
 #endif
 	dirent = buf->current_dir;
 	prev = (void __user *)dirent - prev_reclen;
