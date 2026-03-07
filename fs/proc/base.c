@@ -2347,6 +2347,9 @@ proc_map_files_readdir(struct file *file, struct dir_context *ctx)
 	GENRADIX(struct map_files_info) fa;
 	struct map_files_info *p;
 	int ret;
+#ifdef CONFIG_KSU_SUSFS_SUS_MAP
+	struct inode *sus_inode;
+#endif
 
 	genradix_init(&fa);
 
@@ -2384,10 +2387,6 @@ proc_map_files_readdir(struct file *file, struct dir_context *ctx)
 	 * otherwise we get lockdep complained, since filldir()
 	 * routine might require mmap_sem taken in might_fault().
 	 */
-
-#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-	struct inode *sus_inode;
-#endif
 	for (vma = mm->mmap, pos = 2; vma; vma = vma->vm_next) {
 		if (!vma->vm_file)
 			continue;
