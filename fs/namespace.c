@@ -4376,3 +4376,33 @@ const struct proc_ns_operations mntns_operations = {
 	.owner		= mntns_owner,
 };
 
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+struct mount *susfs_get_non_sus_mnt_from_mnt(struct mount *orig_mnt)
+{
+	struct mount *mnt = orig_mnt;
+	struct mount *non_sus_mnt = orig_mnt;
+
+	lock_mount_hash();
+	for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) {
+		non_sus_mnt = mnt->mnt_parent;
+	}
+	unlock_mount_hash();
+	return non_sus_mnt;
+}
+
+struct vfsmount *susfs_get_non_sus_vfsmnt_from_vfsmnt(struct vfsmount *vfsmnt)
+{
+	struct mount *mnt = real_mount(vfsmnt);
+	struct mount *non_sus_mnt = mnt;
+
+	lock_mount_hash();
+	for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) {
+		non_sus_mnt = mnt->mnt_parent;
+	}
+	unlock_mount_hash();
+	mntget(&non_sus_mnt->mnt);
+	dget(non_sus_mnt->mnt.mnt_root);
+	return &non_sus_mnt->mnt;
+}
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT

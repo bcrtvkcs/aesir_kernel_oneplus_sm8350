@@ -91,22 +91,23 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark, struc
 		struct mount *mnt = NULL;
 		mnt = real_mount(file->f_path.mnt);
 		if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID &&
-			likely(susfs_is_current_proc_umounted_app()))
+			likely(susfs_is_current_proc_umounted()))
 		{
 			struct path path;
 			char *pathname = kmalloc(PAGE_SIZE, GFP_KERNEL);
 			char *dpath;
 			if (!pathname) {
-				goto orig_flow;
+				goto out_kfree;
 			}
 			dpath = d_path(&file->f_path, pathname, PAGE_SIZE);
 			if (!dpath) {
-				kfree(pathname);
-				goto orig_flow;
+				goto out_kfree;
 			}
 			if (kern_path(dpath, 0, &path)) {
-				kfree(pathname);
-				goto orig_flow;
+				goto out_kfree;
+			}
+			if (!path.dentry->d_inode) {
+				goto out_path_put;
 			}
 			seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
 				inode_mark->wd, path.dentry->d_inode->i_ino, path.dentry->d_inode->i_sb->s_dev,
@@ -117,6 +118,10 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark, struc
 			kfree(pathname);
 			iput(inode);
 			return;
+	out_path_put:
+			path_put(&path);
+	out_kfree:
+			kfree(pathname);
 		}
 		orig_flow:
 		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",

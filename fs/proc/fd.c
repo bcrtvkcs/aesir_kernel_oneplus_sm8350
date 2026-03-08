@@ -16,6 +16,9 @@
 #include "../mount.h"
 #include "internal.h"
 #include "fd.h"
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+struct mount *susfs_get_non_sus_mnt_from_mnt(struct mount *orig_mnt);
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #include <linux/susfs_def.h>
@@ -62,12 +65,11 @@ static int seq_show(struct seq_file *m, void *v)
 		struct mount *mnt = NULL;
 		mnt = real_mount(file->f_path.mnt);
 		if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID &&
-			likely(susfs_is_current_proc_umounted_app()))
+			likely(susfs_is_current_proc_umounted()))
 		{
-			for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
 			seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
 				(long long)file->f_pos, f_flags,
-				mnt->mnt_id);
+				susfs_get_non_sus_mnt_from_mnt(mnt)->mnt_id);
 			goto bypass_orig_flow;
 		}
 	}

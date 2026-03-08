@@ -84,28 +84,26 @@ EXPORT_SYMBOL(vfs_get_fsid);
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #include <linux/susfs_def.h>
 #include "mount.h"
+extern struct vfsmount *susfs_get_non_sus_vfsmnt_from_vfsmnt(struct vfsmount *vfsmnt);
 #endif
 
 int vfs_statfs(const struct path *path, struct kstatfs *buf)
 {
 	int error;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	struct mount *mnt;
-
-	mnt = real_mount(path->mnt);
-	if (likely(susfs_is_current_proc_umounted_app())) {
-		for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) {}
+	if (likely(susfs_is_current_proc_umounted())) {
+		struct vfsmount *non_sus_vfsmnt = susfs_get_non_sus_vfsmnt_from_vfsmnt(path->mnt);
+		error = statfs_by_dentry(non_sus_vfsmnt->mnt_root, buf);
+		if (!error)
+			buf->f_flags = calculate_f_flags(non_sus_vfsmnt);
+		mntput(non_sus_vfsmnt);
+		return error;
 	}
-	error = statfs_by_dentry(mnt->mnt.mnt_root, buf);
-	if (!error)
-		buf->f_flags = calculate_f_flags(&mnt->mnt);
-	return error;
-#else
+#endif
 	error = statfs_by_dentry(path->dentry, buf);
 	if (!error)
 		buf->f_flags = calculate_f_flags(path->mnt);
 	return error;
-#endif
 }
 EXPORT_SYMBOL(vfs_statfs);
 
