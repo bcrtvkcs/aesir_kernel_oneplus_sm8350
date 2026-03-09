@@ -91,7 +91,8 @@ int vfs_statfs(const struct path *path, struct kstatfs *buf)
 {
 	int error;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (likely(susfs_is_current_proc_umounted())) {
+	if (likely(susfs_is_current_proc_umounted()) &&
+			real_mount(path->mnt)->mnt_id >= DEFAULT_KSU_MNT_ID) {
 		struct vfsmount *non_sus_vfsmnt = susfs_get_non_sus_vfsmnt_from_vfsmnt(path->mnt);
 		error = statfs_by_dentry(non_sus_vfsmnt->mnt_root, buf);
 		if (!error)
