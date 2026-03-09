@@ -123,7 +123,6 @@ static void inotify_fdinfo(struct seq_file *m, struct fsnotify_mark *mark, struc
 	out_kfree:
 			kfree(pathname);
 		}
-		orig_flow:
 		seq_printf(m, "inotify wd:%x ino:%lx sdev:%x mask:%x ignored_mask:0 ",
 			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
 			   inotify_mark_user_mask(mark));
