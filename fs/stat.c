@@ -86,6 +86,7 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 		      u32 request_mask, unsigned int query_flags)
 {
 	struct inode *inode = d_backing_inode(path->dentry);
+	int error;
 
 	memset(stat, 0, sizeof(*stat));
 	stat->result_mask |= STATX_BASIC_STATS;
@@ -98,12 +99,28 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 	if (IS_AUTOMOUNT(inode))
 		stat->attributes |= STATX_ATTR_AUTOMOUNT;
 
-	if (inode->i_op->getattr)
-		return inode->i_op->getattr(path, stat, request_mask,
-					    query_flags);
+	/* 1. KERNEL: Fill real stats first (via specific getattr or generic_fillattr) */
+	if (inode->i_op->getattr) {
+		error = inode->i_op->getattr(path, stat, request_mask, query_flags);
+	} else {
+		generic_fillattr(inode, stat);
+		error = 0;
+	}
 
-	generic_fillattr(inode, stat);
-	return 0;
+	/* 2. SUSFS: Overwrite real stats with spoofed ones right before returning */
+#ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+	if (!error && inode->i_mapping &&
+	    unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) &&
+	    likely(susfs_is_current_proc_umounted_app())) {
+		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
+		stat->mode = inode->i_mode;
+		stat->rdev = inode->i_rdev;
+		stat->uid = inode->i_uid;
+		stat->gid = inode->i_gid;
+	}
+#endif
+
+	return error;
 }
 EXPORT_SYMBOL(vfs_getattr_nosec);
 
