@@ -39,8 +39,8 @@ extern bool susfs_is_current_ksu_domain(void);
 extern bool susfs_is_current_zygote_domain(void);
 extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 #define CL_COPY_MNT_NS BIT(25)
-static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id);
-static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name);
+/*static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id);
+static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name);*/
 
 static DEFINE_IDA(susfs_mnt_id_ida);
 static DEFINE_IDA(susfs_mnt_group_ida);
@@ -156,18 +156,16 @@ static void mnt_free_id(struct mount *mnt)
 static int mnt_alloc_group_id(struct mount *mnt)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	int res;
-
-	if (susfs_is_current_ksu_domain()) {
-		res = ida_alloc_min(&susfs_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
-		goto bypass_orig_flow;
-	}
-
-	res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
-bypass_orig_flow:
-#else
-	int res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
+    /* DISABLED FOR DEBUGGING: Bypassing SusFS specific allocation to use standard flow */
+    /*
+    if (susfs_is_current_ksu_domain()) {
+        mnt = susfs_alloc_non_unshare_ksu_vfsmnt(name);
+        goto bypass_orig_flow;
+    }
+    */
 #endif
+
+    int res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
 
 	if (res < 0)
 		return res;
@@ -991,14 +989,16 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 	sb = fc->root->d_sb;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+    /* DISABLED FOR DEBUGGING
 	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
 		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(fc->source ?: "none");
 		goto bypass_orig_flow;
 	}
+    */
 #endif
 	mnt = alloc_vfsmnt(fc->source ?: "none");
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-bypass_orig_flow:
+// bypass_orig_flow:
 #endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
@@ -1086,7 +1086,9 @@ vfs_submount(const struct dentry *mountpoint, struct file_system_type *type,
 EXPORT_SYMBOL_GPL(vfs_submount);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id)
+
+/* TEMPORARILY DISABLED FOR DEBUGGING: Functions moved into single comment block to avoid unused function error */
+/* static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id)
 {
 	struct mount *mnt = kmem_cache_zalloc(mnt_cache, GFP_KERNEL);
 	if (mnt) {
@@ -1169,7 +1171,8 @@ out_free_cache:
 	kmem_cache_free(mnt_cache, mnt);
 	return NULL;
 }
-#endif
+*/
+#endif /* SUSFS MOUNT ENDIF */
 
 static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 					int flag)
@@ -1184,6 +1187,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 		goto skip_checking_for_ksu_proc;
 	}
 	if (susfs_is_current_ksu_domain()) {
+        /* DISABLED FOR DEBUGGING
 		if (flag & CL_COPY_MNT_NS) {
 			mnt = susfs_alloc_unshare_ksu_vfsmnt(old->mnt_devname, old->mnt_id);
 			is_mnt_ksu_unshared = true;
@@ -1191,16 +1195,19 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 		}
 		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(old->mnt_devname);
 		goto bypass_orig_flow;
+        */
 	}
 skip_checking_for_ksu_proc:
+    /* DISABLED FOR DEBUGGING
 	if (old->mnt_id >= DEFAULT_KSU_MNT_ID) {
 		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(old->mnt_devname);
 		goto bypass_orig_flow;
 	}
+    */
 #endif
 	mnt = alloc_vfsmnt(old->mnt_devname);
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-bypass_orig_flow:
+// bypass_orig_flow:
 #endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
@@ -1214,7 +1221,7 @@ bypass_orig_flow:
 	}
 
 	if (flag & (CL_SLAVE | CL_PRIVATE | CL_SHARED_TO_SLAVE))
-		mnt->mnt_group_id = 0; /* not a peer of original */
+		mnt->mnt_group_id = 0; // not a peer of original
 	else
 		mnt->mnt_group_id = old->mnt_group_id;
 
@@ -1258,8 +1265,8 @@ bypass_orig_flow:
 	if (flag & CL_MAKE_SHARED)
 		set_mnt_shared(mnt);
 
-	/* stick the duplicate mount on the same expiry list
-	 * as the original if that was on one */
+	// stick the duplicate mount on the same expiry list
+	// as the original if that was on one
 	if (flag & CL_EXPIRE) {
 		if (!list_empty(&old->mnt_expire))
 			list_add(&mnt->mnt_expire, &old->mnt_expire);
