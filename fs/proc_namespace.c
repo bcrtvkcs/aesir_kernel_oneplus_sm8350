@@ -18,6 +18,10 @@
 #include "pnode.h"
 #include "internal.h"
 
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+extern bool susfs_sus_mount(struct vfsmount *mnt);
+#endif
+
 static __poll_t mounts_poll(struct file *file, poll_table *wait)
 {
 	struct seq_file *m = file->private_data;
@@ -96,8 +100,8 @@ static void show_type(struct seq_file *m, struct super_block *sb)
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 #include <linux/susfs_def.h>
-extern bool susfs_hide_sus_mnts_for_non_su_procs;
 extern bool susfs_is_current_ksu_domain(void);
+extern bool susfs_is_current_proc_umounted_app(void);
 #endif
 
 static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
@@ -108,10 +112,8 @@ static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
 	struct super_block *sb = mnt_path.dentry->d_sb;
 	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (READ_ONCE(susfs_hide_sus_mnts_for_non_su_procs) &&
-			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
-			!susfs_is_current_ksu_domain())
-	{
+	/* Bypass user settings: Hide if it's a SuSFS mount AND app is in umount list */
+	if (r->mnt_id >= DEFAULT_KSU_MNT_ID && likely(susfs_is_current_proc_umounted_app())) {
 		return 0;
 	}
 #endif
@@ -153,10 +155,8 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
 	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (READ_ONCE(susfs_hide_sus_mnts_for_non_su_procs) &&
-			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
-			!susfs_is_current_ksu_domain())
-	{
+	/* Bypass user settings: Hide if it's a SuSFS mount AND app is in umount list */
+	if (r->mnt_id >= DEFAULT_KSU_MNT_ID && likely(susfs_is_current_proc_umounted_app())) {
 		return 0;
 	}
 #endif
@@ -225,10 +225,8 @@ static int show_vfsstat(struct seq_file *m, struct vfsmount *mnt)
 	struct super_block *sb = mnt_path.dentry->d_sb;
 	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (READ_ONCE(susfs_hide_sus_mnts_for_non_su_procs) &&
-			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
-			!susfs_is_current_ksu_domain())
-	{
+	/* Bypass user settings: Hide if it's a SuSFS mount AND app is in umount list */
+	if (r->mnt_id >= DEFAULT_KSU_MNT_ID && likely(susfs_is_current_proc_umounted_app())) {
 		return 0;
 	}
 #endif
