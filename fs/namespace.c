@@ -136,15 +136,18 @@ static int mnt_alloc_id(struct mount *mnt)
 static void mnt_free_id(struct mount *mnt)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
-		ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
-		return;
-	}
-	if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
-		return;
-	}
+    /* MUST CHECK FOR UNSHARED FLAG FIRST */
+    if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
+        return;
+    }
+    
+    /* THEN CHECK FOR KSU MNT_ID */
+    if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
+        ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
+        return;
+    }
 #endif
-	ida_free(&mnt_id_ida, mnt->mnt_id);
+    ida_free(&mnt_id_ida, mnt->mnt_id);
 }
 
 /*
