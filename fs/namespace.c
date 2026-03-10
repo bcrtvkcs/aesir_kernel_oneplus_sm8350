@@ -39,8 +39,6 @@ extern bool susfs_is_current_ksu_domain(void);
 extern bool susfs_is_current_zygote_domain(void);
 extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
 #define CL_COPY_MNT_NS BIT(25)
-/*static struct mount *susfs_alloc_unshare_ksu_vfsmnt(const char *name, int old_mnt_id);
-static struct mount *susfs_alloc_non_unshare_ksu_vfsmnt(const char *name);*/
 
 static DEFINE_IDA(susfs_mnt_id_ida);
 static DEFINE_IDA(susfs_mnt_group_ida);
@@ -136,18 +134,18 @@ static int mnt_alloc_id(struct mount *mnt)
 static void mnt_free_id(struct mount *mnt)
 {
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-    /* MUST CHECK FOR UNSHARED FLAG FIRST */
-    if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
-        return;
-    }
-    
-    /* THEN CHECK FOR KSU MNT_ID */
-    if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
-        ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
-        return;
-    }
+	/* ALWAYS CHECK FOR UNSHARED FLAG FIRST TO AVOID IDA DOUBLE FREE */
+	if (mnt->mnt.mnt_flags & VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT) {
+		return;
+	}
+
+	/* THEN CHECK FOR KSU SPECIFIC MNT_ID RANGE */
+	if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		ida_free(&susfs_mnt_id_ida, mnt->mnt_id);
+		return;
+	}
 #endif
-    ida_free(&mnt_id_ida, mnt->mnt_id);
+	ida_free(&mnt_id_ida, mnt->mnt_id);
 }
 
 /*
@@ -155,18 +153,21 @@ static void mnt_free_id(struct mount *mnt)
  */
 static int mnt_alloc_group_id(struct mount *mnt)
 {
+	int res;
+
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-    /* DISABLED FOR DEBUGGING: Bypassing SusFS specific allocation to use standard flow */
-    /*
-    if (susfs_is_current_ksu_domain()) {
-        mnt = susfs_alloc_non_unshare_ksu_vfsmnt(name);
-        goto bypass_orig_flow;
-    }
-    */
+	/* SUSFS: Allocate hidden group ID for KSU domain to prevent mount leakage */
+	if (susfs_is_current_ksu_domain()) {
+		res = ida_alloc_min(&susfs_mnt_group_ida, DEFAULT_KSU_MNT_GROUP_ID, GFP_KERNEL);
+		if (res < 0)
+			return res;
+		mnt->mnt_group_id = res;
+		return 0;
+	}
 #endif
 
-    int res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
-
+	/* STANDARD: Allocate normal group ID */
+	res = ida_alloc_min(&mnt_group_ida, 1, GFP_KERNEL);
 	if (res < 0)
 		return res;
 	mnt->mnt_group_id = res;
@@ -988,20 +989,22 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 		return ERR_PTR(-EINVAL);
 	sb = fc->root->d_sb;
 
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-    /* DISABLED FOR DEBUGGING
-	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
-		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(fc->source ?: "none");
-		goto bypass_orig_flow;
-	}
-    */
-#endif
+	/* ALWAYS USE STANDARD ALLOCATION FLOW FOR KERNEL STABILITY */
 	mnt = alloc_vfsmnt(fc->source ?: "none");
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-// bypass_orig_flow:
-#endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	/* PATCH MNT_ID ONLY AFTER SUCCESSFUL STANDARD ALLOCATION */
+	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
+		int new_id;
+		new_id = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+		if (new_id >= 0) {
+			mnt_free_id(mnt); // Release standard ID
+			mnt->mnt_id = new_id; // Assign SuSFS ID
+		}
+	}
+#endif
 
 	if (fc->fs_type->alloc_mnt_data) {
 		mnt->mnt.data = fc->fs_type->alloc_mnt_data();
@@ -1174,43 +1177,39 @@ out_free_cache:
 */
 #endif /* SUSFS MOUNT ENDIF */
 
-static struct mount *clone_mnt(struct mount *old, struct dentry *root,
-					int flag)
+static struct mount *clone_mnt(struct mount *old, struct dentry *root, int flag)
 {
 	struct super_block *sb = old->mnt.mnt_sb;
 	struct mount *mnt;
 	int err;
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	bool is_mnt_ksu_unshared = false;
 
-	if (susfs_is_sdcard_android_data_decrypted) {
-		goto skip_checking_for_ksu_proc;
-	}
-	if (susfs_is_current_ksu_domain()) {
-        /* DISABLED FOR DEBUGGING
-		if (flag & CL_COPY_MNT_NS) {
-			mnt = susfs_alloc_unshare_ksu_vfsmnt(old->mnt_devname, old->mnt_id);
-			is_mnt_ksu_unshared = true;
-			goto bypass_orig_flow;
-		}
-		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(old->mnt_devname);
-		goto bypass_orig_flow;
-        */
-	}
-skip_checking_for_ksu_proc:
-    /* DISABLED FOR DEBUGGING
-	if (old->mnt_id >= DEFAULT_KSU_MNT_ID) {
-		mnt = susfs_alloc_non_unshare_ksu_vfsmnt(old->mnt_devname);
-		goto bypass_orig_flow;
-	}
-    */
-#endif
+	/* ALWAYS USE STANDARD ALLOCATION FLOW TO INITIALIZE PER-CPU AND LISTS */
 	mnt = alloc_vfsmnt(old->mnt_devname);
-#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-// bypass_orig_flow:
-#endif
 	if (!mnt)
 		return ERR_PTR(-ENOMEM);
+
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
+		mnt_free_id(mnt); // Release standard ID first
+		if (flag & CL_COPY_MNT_NS) {
+			/* PATCH AS UNSHARED MOUNT: INHERIT OLD MNT_ID BUT DO NOT ALLOC NEW IDA */
+			mnt->mnt_id = old->mnt_id;
+			is_mnt_ksu_unshared = true;
+		} else {
+			/* ALLOC NEW SUSFS MNT_ID FROM THE CORRECT IDA POOL */
+			int new_id = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+			mnt->mnt_id = (new_id >= 0) ? new_id : old->mnt_id;
+		}
+	} else if (old->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		/* HANDLE CLONING OF EXISTING SUSFS MOUNTS OUTSIDE KSU DOMAIN */
+		int new_id = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
+		if (new_id >= 0) {
+			mnt_free_id(mnt);
+			mnt->mnt_id = new_id;
+		}
+	}
+#endif
 
 	if (sb->s_op->clone_mnt_data) {
 		mnt->mnt.data = sb->s_op->clone_mnt_data(old->mnt.data);
