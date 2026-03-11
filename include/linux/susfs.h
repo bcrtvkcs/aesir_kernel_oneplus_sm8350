@@ -40,12 +40,6 @@ struct st_susfs_sus_path_list {
 	size_t                                  path_len;
 };
 
-struct st_external_dir {
-	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
-	bool                                    is_inited;
-	int                                     cmd;
-	int                                     err;
-};
 #endif
 
 /* sus_mount */
@@ -163,7 +157,6 @@ struct st_susfs_version {
 /***********************/
 /* sus_path */
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
-void susfs_set_i_state_on_external_dir(void __user **user_info);
 void susfs_add_sus_path(void __user **user_info);
 void susfs_add_sus_path_loop(void __user **user_info);
 #endif
