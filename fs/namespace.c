@@ -1003,7 +1003,7 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	/* PATCH MNT_ID ONLY AFTER SUCCESSFUL STANDARD ALLOCATION */
-	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
+	if (susfs_is_current_ksu_domain()) {
 		int new_id;
 		new_id = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
 		if (new_id >= 0) {
@@ -1197,7 +1197,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root, int flag)
 		return ERR_PTR(-ENOMEM);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
+	if (susfs_is_current_ksu_domain()) {
 		mnt_free_id(mnt); // Release standard ID first
 		if (flag & CL_COPY_MNT_NS) {
 			/* PATCH AS UNSHARED MOUNT: INHERIT OLD MNT_ID BUT DO NOT ALLOC NEW IDA */
