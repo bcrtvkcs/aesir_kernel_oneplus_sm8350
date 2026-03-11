@@ -335,6 +335,11 @@ void susfs_add_sus_kstat(void __user **user_info) {
 
 	new_entry->target_ino = info.target_ino;
 	memcpy(&new_entry->info, &info, sizeof(info));
+	/* For /system/etc/hosts, always spoof size to match the original Android hosts file */
+	if (!info.is_statically && strcmp(info.target_pathname, "/system/etc/hosts") == 0) {
+		new_entry->info.spoofed_size = 56;
+		new_entry->info.spoofed_blocks = 8;
+	}
 
 	info.err = susfs_update_sus_kstat_inode(new_entry->info.target_pathname);
 	if (info.err) {
