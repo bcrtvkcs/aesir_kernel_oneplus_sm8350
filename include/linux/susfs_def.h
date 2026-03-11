@@ -84,7 +84,4 @@ static inline bool susfs_is_current_proc_umounted_app(void) {
 			current_uid().val >= 10000);
 }
 
-static inline bool susfs_is_system_uid(void) {
-	return (current_uid().val % 100000) < 10000;
-}
 #endif // #ifndef KSU_SUSFS_DEF_H
