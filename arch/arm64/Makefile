@@ -55,6 +55,12 @@ KBUILD_AFLAGS	+= $(compat_vdso)
 KBUILD_CFLAGS	+= $(call cc-option,-mabi=lp64)
 KBUILD_AFLAGS	+= $(call cc-option,-mabi=lp64)
 
+# SM8350 (Snapdragon 888) microarchitecture-specific optimizations
+# Targets ARMv8.2-A ISA with hardware crypto and RCpc atomics,
+# tuned for the Cortex-X1 prime core pipeline.
+KBUILD_CFLAGS	+= $(call cc-option,-march=armv8.2-a+crypto+rcpc)
+KBUILD_CFLAGS	+= $(call cc-option,-mtune=cortex-x1)
+
 ifeq ($(CONFIG_STACKPROTECTOR_PER_TASK),y)
 prepare: stack_protector_prepare
 stack_protector_prepare: prepare0
