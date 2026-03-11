@@ -54,7 +54,7 @@ void generic_fillattr(struct inode *inode, struct kstat *stat)
 	stat->blksize = i_blocksize(inode);
 	stat->blocks = inode->i_blocks;
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-	if (inode->i_mapping &&
+	if (!susfs_is_system_uid() && inode->i_mapping &&
 		unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)))
 	{
 		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
@@ -108,7 +108,7 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 
 	/* 2. SUSFS: Overwrite real stats with spoofed ones right before returning */
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-	if (!error && inode->i_mapping &&
+	if (!error && !susfs_is_system_uid() && inode->i_mapping &&
 	    unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags))) {
 		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
 		stat->mode = inode->i_mode;
