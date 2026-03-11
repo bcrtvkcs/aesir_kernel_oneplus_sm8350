@@ -153,6 +153,7 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
 	int err;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+	pr_info("susfs_debug: show_mountinfo mnt_id=%d hide=%d ksu_domain=%d\n", r->mnt_id, (int)READ_ONCE(susfs_hide_sus_mnts_for_non_su_procs), (int)susfs_is_current_ksu_domain());
 	if (READ_ONCE(susfs_hide_sus_mnts_for_non_su_procs) &&
 			r->mnt_id >= DEFAULT_KSU_MNT_ID &&
 			!susfs_is_current_ksu_domain())
