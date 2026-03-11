@@ -44,13 +44,6 @@ static DEFINE_IDA(susfs_mnt_id_ida);
 static DEFINE_IDA(susfs_mnt_group_ida);
 #endif
 
-#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
-extern void susfs_auto_add_sus_bind_mount(const char *old_name, struct path *path);
-#endif
-#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_OVERLAYFS
-extern void susfs_auto_add_sus_overlayfs(const char *fstype, void *data, struct path *path);
-#endif
-
 /* Maximum number of mounts in a mount namespace */
 unsigned int sysctl_mount_max __read_mostly = 100000;
 
@@ -1003,7 +996,7 @@ struct vfsmount *vfs_create_mount(struct fs_context *fc)
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	/* PATCH MNT_ID ONLY AFTER SUCCESSFUL STANDARD ALLOCATION */
-	if (susfs_is_current_ksu_domain()) {
+	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
 		int new_id;
 		new_id = ida_alloc_min(&susfs_mnt_id_ida, DEFAULT_KSU_MNT_ID, GFP_KERNEL);
 		if (new_id >= 0) {
@@ -1197,7 +1190,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root, int flag)
 		return ERR_PTR(-ENOMEM);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-	if (susfs_is_current_ksu_domain()) {
+	if (!susfs_is_sdcard_android_data_decrypted && susfs_is_current_ksu_domain()) {
 		mnt_free_id(mnt); // Release standard ID first
 		if (flag & CL_COPY_MNT_NS) {
 			/* PATCH AS UNSHARED MOUNT: INHERIT OLD MNT_ID BUT DO NOT ALLOC NEW IDA */
@@ -2597,12 +2590,6 @@ static int do_loopback(struct path *path, const char *old_name,
 		umount_tree(mnt, UMOUNT_SYNC);
 		unlock_mount_hash();
 	}
-	
-	else {
-		#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT
-			susfs_auto_add_sus_bind_mount(old_name, path);
-		#endif
-	}
 
 out2:
 	unlock_mount(mp);
@@ -3194,14 +3181,8 @@ static int do_new_mount(struct path *path, const char *fstype, int sb_flags,
 		err = -EPERM;
 	if (!err)
 		err = vfs_get_tree(fc);
-	if (!err) {
+	if (!err)
 		err = do_new_mount_fc(fc, path, mnt_flags);
-		if (!err) {
-	#ifdef CONFIG_KSU_SUSFS_AUTO_ADD_SUS_OVERLAYFS
-			susfs_auto_add_sus_overlayfs(fstype, data, path);
-	#endif
-		}
-	}
 
 	put_fs_context(fc);
 	return err;
