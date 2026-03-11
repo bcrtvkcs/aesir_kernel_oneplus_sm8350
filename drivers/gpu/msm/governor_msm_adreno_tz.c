@@ -398,11 +398,12 @@ static int tz_get_target_freq(struct devfreq *devfreq, unsigned long *freq)
 	stats->busy_time = min_t(u64, busy_time, stats->total_time);
 
 	if (adrenoboost &&
-		    (unsigned int)(priv->bin.busy_time + stats->busy_time) >= MIN_BUSY)
-		priv->bin.busy_time += stats->busy_time *
-				(1 + (adrenoboost * 3) / 2);
-	else
+		    (priv->bin.busy_time + stats->busy_time) >= MIN_BUSY) {
+		u64 boosted = stats->busy_time * (1 + (adrenoboost * 3) / 2);
+		priv->bin.busy_time += boosted;
+	} else {
 		priv->bin.busy_time += stats->busy_time;
+	}
 
 	if (stats->private_data)
 		context_count =  *((int *)stats->private_data);
