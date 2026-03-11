@@ -406,12 +406,12 @@ void susfs_update_sus_kstat(void __user **user_info) {
 							new_entry->info.target_ino, info.target_ino, info.target_pathname);
 			new_entry->target_ino = info.target_ino;
 			new_entry->info.target_ino = info.target_ino;
-			if (info.spoofed_size > 0) {
+			if (info.spoofed_size > 0 && strcmp(info.target_pathname, "/system/etc/hosts") != 0) {
 				SUSFS_LOGI("updating spoofed_size from '%lld' to '%lld' for pathname: '%s' in SUS_KSTAT_HLIST\n",
 								new_entry->info.spoofed_size, info.spoofed_size, info.target_pathname);
 				new_entry->info.spoofed_size = info.spoofed_size;
 			}
-			if (info.spoofed_blocks > 0) {
+			if (info.spoofed_blocks > 0 && strcmp(info.target_pathname, "/system/etc/hosts") != 0) {
 				SUSFS_LOGI("updating spoofed_blocks from '%llu' to '%llu' for pathname: '%s' in SUS_KSTAT_HLIST\n",
 								new_entry->info.spoofed_blocks, info.spoofed_blocks, info.target_pathname);
 				new_entry->info.spoofed_blocks = info.spoofed_blocks;
