@@ -5,6 +5,7 @@
 - SM8350-specific compiler optimizations (-march=armv8.2-a+crypto+rcpc, -mtune=cortex-x1)
 - SuSFS: SRCU for SUS_PATH, kstat spoofing fixes for hosts bind mount, proc_namespace mount hiding fixes
 - KernelSU-Next submodule updated
+- SuSFS updated from latest commits
 
 Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/420b04f78b7dc659c90f6303db518bb8b138c076* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/c10d7c34c85b5d9b7befd01751e14b77f1f44dbb* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/835551b6332bddb3bd6491e31e8dbede921f858a* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/f9c86967edfff2663646c8d25d556ce35c71978a*
 
@@ -38,6 +39,9 @@ Five-patch series backporting uclamp-aware CPU capacity checking:
 
 ## KernelSU-Next: submodule update
 Updated KernelSU-Next submodule to latest legacy_susfs branch commit.
+
+## SuSFS v2.0.0
+Updated with latest commits from [Simonpunk's gki-android16-6.12 branch](https://gitlab.com/simonpunk/susfs4ksu/-/tree/gki-android16-6.12).
 
 # `v1.2.3` What's New?
 - ROM-side changes. Here's is the [changelog](https://crdroid.net/lemonadep/12#changelog).
