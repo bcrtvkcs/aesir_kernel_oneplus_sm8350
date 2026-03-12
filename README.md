@@ -146,6 +146,10 @@ Instead of using kprobes (which can be detected), ÆSIR Kernel uses **9 inline h
 | **Child Runs First** | Forked child processes run before parent - reduces Copy-on-Write page faults on fork+exec |
 | **Colocation Threshold: 20** | Top-app tasks receive sched boost at lower utilization than stock (35), balancing responsiveness with thermal efficiency |
 | **Perf CPU Overhead: 10%** | Perf sampling CPU time limit reduced from 25% to 10% |
+| **BORE Scheduler v5.1.0** | Burst-Oriented Response Enhancer by Masahito S (firelzrd) - tracks per-task burst time to prioritize interactive/bursty tasks over CPU-bound ones; reduces UI latency on asymmetric topologies like SM8350. Coexists with WALT. Tuneable via `sysctl kernel.sched_bore` and related knobs |
+| **uclamp EAS Integration** | Backported uclamp-aware CPU capacity checking from Linux 5.15: `util_fits_cpu()` helper, EAS wakeup placement, `select_idle_capacity()`, and `asym_fits_cpu()` - ensures Energy Aware Scheduling correctly respects uclamp_min boost and uclamp_max cap when selecting CPU candidates |
+| **iowait Boost uclamp Fix** | iowait boost signal now honours uclamp restrictions - prevents I/O-heavy tasks capped by uclamp_max from requesting higher CPU frequencies via the iowait path |
+| **SM8350 Compiler Flags** | `-march=armv8.2-a+crypto+rcpc` enables hardware-accelerated AES/SHA and RCpc atomics; `-mtune=cortex-x1` optimises instruction scheduling for the prime core's wide out-of-order pipeline |
 
 ### Memory & VM
 
@@ -362,6 +366,9 @@ There is no need to compile the kernel separately - `brunch` handles everything.
 - [arter97](https://github.com/arter97) - BBR TCP, LZ4 ZRAM, schedutil defaults (arter97-kernel)
 - [engstk / McQuaid](https://github.com/engstk) - Power-efficient workqueues, debug debloat (blu_spark)
 - [Nathan Chancellor / Eva Kernel](https://github.com/nathanchance) - Power-efficient workqueues reference
+
+- [firelzrd](https://github.com/firelzrd/bore-scheduler) - BORE (Burst-Oriented Response Enhancer) scheduler
+- [Qais Yousef / ARM](https://lore.kernel.org/r/20220804143609.515789-1-qais.yousef@arm.com) - uclamp EAS integration patches (util_fits_cpu, asym_fits_cpu, iowait fix)
 
 #### Tooling
 - [Claude Code](https://claude.ai/code) - AI-assisted kernel integration
