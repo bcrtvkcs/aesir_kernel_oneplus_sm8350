@@ -1,10 +1,10 @@
-# ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.0.1 + SuSFS v2.0.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
+# ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.1.0 + SuSFS v2.0.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
 
 <p align="center">
   <img src="https://i.imgur.com/lfo6Z8h.png?raw=true" alt="ÆSIR Header Image"/>
 </p>
 
-ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.0.1** + **SuSFS v2.0.0** integrated directly into the kernel source.
+ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.1.0** + **SuSFS v2.0.0** integrated directly into the kernel source.
 
 Follow this link to join the [Telegram channel](https://t.me/aesirkernel)
 
@@ -30,7 +30,7 @@ Stock crDroid kernel does not include the newest KernelSU Next or the newest roo
 
 ## Solution
 
-This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) v3.1.0 and [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) v2.0.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.7 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through **9 inline syscall hooks** hand-placed in kernel source files - making detection significantly harder. SuSFS hides all root artifacts (paths, mounts, maps, kernel symbols) while SELinux remains Enforcing and Play Integrity passes at DEVICE level.
+This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) v3.1.0 and [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) v2.0.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.8 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through **9 inline syscall hooks** hand-placed in kernel source files - making detection significantly harder. SuSFS hides all root artifacts (paths, mounts, maps, kernel symbols) while SELinux remains Enforcing and Play Integrity passes at DEVICE level.
 
 ## Installation
 
@@ -47,7 +47,7 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 
 > If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 9 (ksu_susfs_bind_kstat) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
 
-> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.8 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### Instructions for **OnePlus 9 (lemonade)**
 
@@ -64,7 +64,7 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 
 > I can't test the OnePlus 9 (lemonade)'s prebuilt zip because I don't have the device. It probably works fine, but there might be something I don't know about. Just in case. If you would like to test it and share your results, I would be appriciate it. If you encounter a bug or want to have a feature request, [please let me know](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/issues).
 
-> The prebuilt zip in Releases contains the full crDroid 12.7 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.8 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### If you'd like to support the project, feel free to leave a star ⭐
 
@@ -73,10 +73,10 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 | Component | Details |
 |-----------|---------|
 | **Kernel** | 5.4.302 (aarch64) |
-| **ROM** | crDroid 12.7 (Android 16) (latest) |
+| **ROM** | crDroid 12.8 (Android 16) (latest) |
 | **Device** | OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade) |
 | **SoC** | Qualcomm Snapdragon 888 (SM8350/Lahaina) |
-| **KernelSU Next** | v3.1.0 (version code 33006) |
+| **KernelSU Next** | v3.1.0 (version code 33035) |
 | **SuSFS** | v2.0.0 |
 | **SELinux** | Enforcing |
 | **Hook Mode** | GKI1 - Inline (manual) syscall hooks |
@@ -183,7 +183,7 @@ Disabled at compile time: `PROFILING`, `SCHEDSTATS`, `DEBUG_INFO`, `DEBUG_STACK_
 
 ## Building from Source
 
-### crDroid 12.7 (Android 16) - OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade)  Build Guide
+### crDroid 12.8 (Android 16) - OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade)  Build Guide
 
 ÆSIR Kernel is built as part of the full crDroid ROM - there is no need to compile the kernel separately. The `brunch` build system handles everything automatically.
 
