@@ -177,7 +177,7 @@ Instead of using kprobes (which can be detected), ÆSIR Kernel uses **9 inline h
 
 ### Debug Overhead Removed
 
-Disabled at compile time: , `SCHEDSTATS`, `DEBUG_INFO`, `DEBUG_STACK_USAGE`, `DEBUG_MEMORY_INIT`, `FUNCTION_ERROR_INJECTION` - reduces kernel image size and eliminates runtime tracing overhead.
+Disabled at compile time: `SCHEDSTATS`, `DEBUG_INFO`, `DEBUG_STACK_USAGE`, `DEBUG_MEMORY_INIT`, `FUNCTION_ERROR_INJECTION` - reduces kernel image size and eliminates runtime tracing overhead.
 
 > **Note:** All runtime-tuneable parameters (scheduler, VM, network) can still be adjusted via `sysctl` or `sysfs` if you want to override the defaults.
 
