@@ -4387,17 +4387,26 @@ const struct proc_ns_operations mntns_operations = {
 
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-struct mount *susfs_get_non_sus_mnt_from_mnt(struct mount *orig_mnt)
-{
+int susfs_get_non_sus_mnt_id_from_mnt(struct mount *orig_mnt) {
 	struct mount *mnt = orig_mnt;
-	struct mount *non_sus_mnt = orig_mnt;
+	int mnt_id;
 
 	lock_mount_hash();
-	for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) {
-		non_sus_mnt = mnt->mnt_parent;
-	}
+	for (; mnt && mnt->mnt_parent && mnt != mnt->mnt_parent && mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
+	mnt_id = mnt->mnt_id;
 	unlock_mount_hash();
-	return non_sus_mnt;
+	return mnt_id;
+}
+
+u64 susfs_get_non_sus_mnt_id_unique_from_mnt(struct mount *orig_mnt) {
+	struct mount *mnt = orig_mnt;
+	u64 mnt_id_unique;
+
+	lock_mount_hash();
+	for (; mnt && mnt->mnt_parent && mnt != mnt->mnt_parent && mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
+	mnt_id_unique = mnt->mnt_id_unique;
+	unlock_mount_hash();
+	return mnt_id_unique;
 }
 
 struct vfsmount *susfs_get_non_sus_vfsmnt_from_vfsmnt(struct vfsmount *vfsmnt)

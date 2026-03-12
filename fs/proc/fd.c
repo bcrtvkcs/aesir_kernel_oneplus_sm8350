@@ -17,7 +17,7 @@
 #include "internal.h"
 #include "fd.h"
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
-struct mount *susfs_get_non_sus_mnt_from_mnt(struct mount *orig_mnt);
+extern int susfs_get_non_sus_mnt_id_from_mnt(struct mount *orig_mnt);
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
@@ -69,7 +69,7 @@ static int seq_show(struct seq_file *m, void *v)
 		{
 			seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
 				(long long)file->f_pos, f_flags,
-				susfs_get_non_sus_mnt_from_mnt(mnt)->mnt_id);
+				susfs_get_non_sus_mnt_id_from_mnt(mnt));
 			goto bypass_orig_flow;
 		}
 	}

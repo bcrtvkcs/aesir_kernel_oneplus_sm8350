@@ -35,7 +35,7 @@
 #include <linux/version.h>
 #endif
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
-extern void susfs_sus_ino_for_generic_fillattr(unsigned long ino, struct kstat *stat);
+extern void susfs_generic_fillattr_spoofer(struct inode *inode, struct kstat *stat);
 #endif
 
 void generic_fillattr(struct inode *inode, struct kstat *stat)
@@ -58,7 +58,7 @@ void generic_fillattr(struct inode *inode, struct kstat *stat)
 		unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) &&
 		likely(susfs_is_current_proc_umounted_app()))
 	{
-		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
+		susfs_generic_fillattr_spoofer(inode, stat);
 		stat->mode = inode->i_mode;
 		stat->rdev = inode->i_rdev;
 		stat->uid = inode->i_uid;
@@ -112,7 +112,7 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
 	if (!error && inode->i_mapping &&
 	    unlikely(test_bit(AS_FLAGS_SUS_KSTAT, &inode->i_mapping->flags)) &&
 	    likely(susfs_is_current_proc_umounted_app())) {
-		susfs_sus_ino_for_generic_fillattr(inode->i_ino, stat);
+		susfs_generic_fillattr_spoofer(inode, stat);
 		stat->mode = inode->i_mode;
 		stat->rdev = inode->i_rdev;
 		stat->uid = inode->i_uid;
