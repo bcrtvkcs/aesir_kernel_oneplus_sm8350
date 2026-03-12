@@ -1,3 +1,44 @@
+# `v2.0.0` What's New?
+- **Huge refactor**: kernel source rebuilt from ground up with comprehensive performance and scheduler optimizations
+- BORE (Burst-Oriented Response Enhancer) Scheduler v5.1.0 integrated with WALT coexistence
+- uclamp EAS Integration backported from Linux 5.15 (util_fits_cpu, asym_fits_cpu, iowait fix)
+- SM8350-specific compiler optimizations (-march=armv8.2-a+crypto+rcpc, -mtune=cortex-x1)
+- SuSFS: SRCU for SUS_PATH, kstat spoofing fixes for hosts bind mount, proc_namespace mount hiding fixes
+- KernelSU-Next submodule updated
+
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/420b04f78b7dc659c90f6303db518bb8b138c076* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/c10d7c34c85b5d9b7befd01751e14b77f1f44dbb* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/835551b6332bddb3bd6491e31e8dbede921f858a* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/f9c86967edfff2663646c8d25d556ce35c71978a*
+
+## arch: arm64: SM8350 microarchitecture compiler optimizations
+Target ARMv8.2-A ISA for hardware-accelerated cryptographic instructions and RCpc atomics via `-march=armv8.2-a+crypto+rcpc`. Tune instruction scheduling for the Cortex-X1 prime core's wide out-of-order pipeline via `-mtune=cortex-x1`. Both flags wrapped in `cc-option` for graceful toolchain degradation.
+
+## sched: BORE Scheduler v5.1.0 with WALT coexistence
+Integrate BORE (Burst-Oriented Response Enhancer) by Masahito S (firelzrd), adapted for Linux 5.4 with WALT coexistence. BORE extends CFS by tracking a per-task burst time metric — tasks with low burst scores (interactive, bursty) receive priority over CPU-bound tasks, reducing UI latency on SM8350's asymmetric 1+3+4 topology. WALT initialization conflict resolved by preserving both WALT and BORE fork hooks in `sched_fork()`. Sysctl variables (`one`, `zero`, `three`) properly guarded against WALT redefinition conflicts.
+
+Tuneable via sysctl:
+- `kernel.sched_bore`
+- `kernel.sched_burst_cache_lifetime`
+- `kernel.sched_burst_fork_atavistic`
+- `kernel.sched_burst_penalty_offset`
+- `kernel.sched_burst_penalty_scale`
+- `kernel.sched_burst_smoothness_long` / `short`
+
+## sched/uclamp: EAS Integration backported from Linux 5.15
+Five-patch series backporting uclamp-aware CPU capacity checking:
+- `util_fits_cpu()` helper: encapsulates uclamp-aware capacity checking, correctly handling uclamp_min boost and uclamp_max cap without applying migration margin to uclamp comparisons. Adapted for 5.4: `arch_scale_thermal_pressure()` unavailable, replaced with `capacity_orig_of()` as conservative fallback.
+- EAS wakeup placement: `find_energy_efficient_cpu()` now uses `uclamp_rq_util_with()` to correctly account for rq-wide uclamp aggregation when selecting CPU candidates.
+- `select_idle_capacity()`: uses `util_fits_cpu()` to respect migration margin and capacity pressure under uclamp.
+- `asym_fits_capacity()` → `asym_fits_cpu()`: renamed and updated to use `util_fits_cpu()` across all call sites including kworker sync wakeup path.
+- iowait boost fix: iowait boost signal now honours uclamp restrictions via `uclamp_rq_util_with()`, preventing I/O-heavy tasks capped by uclamp_max from escaping frequency limits through the iowait path.
+
+## susfs: SRCU for SUS_PATH and kstat spoofing fixes
+- Implement SRCU (Sleepable RCU) for SUS_PATH operations, replacing previous locking scheme for safer concurrent path lookups.
+- Fix kstat spoofing for `/system/etc/hosts` bind mount: correctly handle bind-mounted paths so spoofed size is preserved and not overridden by `update_sus_kstat()`.
+- Restore `susfs_is_current_proc_umounted_app()` gate for kstat spoofing to prevent over-broad spoofing of system UIDs.
+- Fix `proc_namespace` mount hiding debug logging cleanup.
+
+## KernelSU-Next: submodule update
+Updated KernelSU-Next submodule to latest legacy_susfs branch commit.
+
 # `v1.2.3` What's New?
 - ROM-side changes. Here's is the [changelog](https://crdroid.net/lemonadep/12#changelog).
 - Fix brightness stuck at 100%: disable sysfs HBM for AMB670YF01
