@@ -1,4 +1,4 @@
-# `v2.0.0` What's New?
+# What's New?
 - **Huge refactor**: kernel source rebuilt from ground up with comprehensive performance and scheduler optimizations
 - BORE (Burst-Oriented Response Enhancer) Scheduler v5.1.0 integrated with WALT coexistence
 - uclamp EAS Integration backported from Linux 5.15 (util_fits_cpu, asym_fits_cpu, iowait fix)
@@ -38,10 +38,10 @@ Five-patch series backporting uclamp-aware CPU capacity checking:
 - Fix `proc_namespace` mount hiding debug logging cleanup.
 
 ## KernelSU-Next: submodule update
-Updated KernelSU-Next submodule to latest legacy_susfs branch commit.
+Updated [KernelSU-Next submodule](https://github.com/bcrtvkcs/KernelSU-Next) to latest legacy_susfs branch commit.
 
 ## SuSFS v2.0.0
-Updated with latest commits from [Simonpunk's gki-android16-6.12 branch](https://gitlab.com/simonpunk/susfs4ksu/-/tree/gki-android16-6.12).
+Updated with latest commits from [gki-android16-6.12 branch of my repo](https://gitlab.com/bcrtvkcs/susfs4ksu) that compatible with *Linux Kernel 5.4 API*.
 
 # `v1.2.3` What's New?
 - ROM-side changes. Here's is the [changelog](https://crdroid.net/lemonadep/12#changelog).
