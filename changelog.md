@@ -1,4 +1,4 @@
-# What's New?
+# `v2.0.0` What's New?
 - **Huge refactor**: kernel source rebuilt from ground up with comprehensive performance and scheduler optimizations
 - BORE (Burst-Oriented Response Enhancer) Scheduler v5.1.0 integrated with WALT coexistence
 - uclamp EAS Integration backported from Linux 5.15 (util_fits_cpu, asym_fits_cpu, iowait fix)
