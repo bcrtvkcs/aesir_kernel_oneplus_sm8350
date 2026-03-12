@@ -1,0 +1,249 @@
+# `v1.2.3` What's New?
+- ROM-side changes. Here's is the [changelog](https://crdroid.net/lemonadep/12#changelog).
+- Fix brightness stuck at 100%: disable sysfs HBM for AMB670YF01
+- Fix (susfs): add missing devpts hook and remove deprecated sus_su
+- Cleanup (kernelsu): remove __NR_statx from syscall hook manager
+
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/1dd56ed81ec7b6338b768e28bcdef90b2a9d5ca0* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/a894cf3e3d75d60f58dc3c43a3910438ef8df3d7* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/c0a6c81151be83c4dcea16b8e94366c123d80f12*
+
+## Fix brightness stuck at 100%: disable sysfs HBM for AMB670YF01
+Root cause identified via debug logging: crDroid framework writes
+hbm_mode=1 to /sys/kernel/oplus_display/hbm, which triggers
+dsi_display_normal_hbm_on() sending DSI_CMD_NORMAL_HBM_ON to the
+panel. This sets brightness register (0x51) to 0x0EFF (max) and
+puts the panel in HBM mode (0x53=0xE0). The hbm_mode guard then
+blocks ALL subsequent brightness writes from userspace.
+
+The FOD (fingerprint-on-display) HBM path works correctly via a
+completely separate mechanism (oplus_dimlayer_hbm -> fingerprint_mode
+-> sde_connector_update_hbm) and is not affected by this change.
+
+Fix:
+1. Skip DSI commands in both sysfs HBM handlers for AMB670YF01
+   (oplus_display_panel_set_hbm and oplus_display_set_hbm) -
+   the variable is still set but no panel commands are sent
+2. Remove the hbm_mode brightness blocking guard in
+   dsi_panel_update_backlight() so brightness writes always go through
+3. Remove the hbm_mode check in sde_connector_update_hbm() that
+   skipped sending HBM OFF during FOD exit
+4. Remove all temporary BRIGHTNESS_DEBUG logging
+
+## Fix (susfs): add missing devpts hook and remove deprecated sus_su
+- Apply missing ksu_handle_devpts() hook in fs/devpts/inode.c that was defined in sucompat.c but never called, breaking PTY/TTY security context handling for root-granted apps
+- Remove deprecated and unused fs/sus_su.c and include/linux/sus_su.h (dead code not compiled by Makefile, marked deprecated in susfs v2.0.0)
+
+## Cleanup (kernelsu): remove __NR_statx from syscall hook manager
+Remove __NR_statx from both check_syscall_fastpath() and the sys_enter handler in syscall_hook_manager.c, matching upstream KernelSU-Next which no longer intercepts statx at syscall level.
+
+This code is dead anyway when CONFIG_KSU_SUSFS is enabled (which this kernel uses), but cleaning it up keeps us closer to upstream and removes unnecessary dead code paths.
+
+# `v1.2.2` What's New?
+- Kernel rebranding: **Æsir Kernel | Divine Power, Silent Dominion.**
+- feat: Latest [SuSFS commits](https://gitlab.com/simonpunk/susfs4ksu/-/commits/abf5866ea052c4109e1f1c001655773d5d1ac298) applied.
+- **SECURITY fix**: Allowlist bypass in SuSFS su compat handler.
+
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/c10620e363c4bc87738b18d68c63833668772e59* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/23693d13b71dbaf96548815657b0297ec9ebdd6c* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/6fb03e32acb698655ef5ab41d8280b234dd9fdeb* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/9a138c2c2937fee1e31d7963a0e7ab45f4978b4d* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/1886441d97d67e7e1b027691ca7e08f6d08d5c32* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/b58e8a337db77ec60c05d7a52e77be30b3da1a53*
+
+## Kernel Rebranding: The kernel has now been renamed Æsir Kernel.
+It's with great pleasure that we announce the renaming of the kernel to Æsir Kernel.
+- Updated README.md to reflect the new kernel name 'Æsir Kernel' and made various text adjustments for clarity.
+
+## susfs: add newfstatat syscall hook for Android 16 Canary compat
+- Android 16 Canary uses newfstatat instead of fstat to stat init.rc
+(via fstatat with AT_EMPTY_PATH). Without this hook, the stat size
+doesn't include the appended KSU RC content, causing init to
+truncate the injected lines.
+
+- Add ksu_handle_sys_newfstatat() in ksud.c and hook it into
+SYSCALL_DEFINE4(newfstatat) in fs/stat.c, mirroring the existing
+ksu_handle_vfs_fstat() approach.
+
+## susfs: migrate from BIT_ macros to test_bit() kernel API
+Replace all hand-rolled bitwise flag checks (inode->i_mapping->flags
+& BIT_SUS_*) with the standard kernel test_bit() macro. This is
+both safer on architectures where unsigned long != u64 and consistent
+with how set_bit() is already used for the write side.
+
+Remove the now-unused BIT_SUS_PATH, BIT_SUS_MOUNT, BIT_SUS_KSTAT,
+BIT_OPEN_REDIRECT, BIT_ANDROID_DATA_ROOT_DIR,
+BIT_ANDROID_SDCARD_ROOT_DIR and BIT_SUS_MAPS defines from
+susfs_def.h.  The corresponding AS_FLAGS_* constants remain and are
+used by both set_bit() and the new test_bit() calls.
+
+Files changed: susfs_def.h, susfs.c, stat.c, statfs.c, namei.c,
+proc/task_mmu.c, proc/base.c
+
+## susfs: add FUSE filesystem support and workqueue-based sdcard monitor
+Port key improvements from upstream susfs4ksu@2242ee24 to kernel 5.4:
+
+FUSE support:
+- Include fuse/fuse_i.h and define FUSE_SUPER_MAGIC fallback
+- susfs_add_sus_path(): detect FUSE inodes via s_magic check and
+  flag the underlying fuse_inode directly with AS_FLAGS_SUS_PATH
+- susfs_run_sus_path_loop(): use RCU read lock and handle FUSE
+  inodes alongside regular inodes
+- susfs_is_inode_sus_path() (all 3 kernel-version variants): add
+  early-return for uid < 10000 and non-umounted processes, then
+  check FUSE inode mapping flags via get_fuse_inode()
+
+Sdcard monitor rewrite:
+- Replace blocking kthread poll loop with non-blocking fsnotify
+  callback + delayed_work architecture
+- fsnotify handler defers cleanup to system_unbound_wq (5s delay)
+  to avoid SRCU deadlock from calling fsnotify_destroy_group()
+  inside the notification callback
+- Proper cleanup via xchg() for group/inode pointers
+
+Keep existing Android data/sdcard path lists intact - they're still
+referenced by readdir.c and namei.c hooks. FUSE support provides an
+additional layer of detection.
+
+## susfs: simplify mount group ID allocation for KSU domain
+Replace the separate susfs_ksu_mnt_group_ida with direct allocation
+from the kernel's mnt_group_ida using susfs_is_current_ksu_domain()
+as the decision predicate.
+
+Previously, KSU mount group IDs were allocated from a dedicated IDA
+gated by susfs_is_boot_completed_triggered timing, which was fragile
+and leaked IDA entries on unmount after boot-completed. Now:
+
+- mnt_alloc_group_id(): allocate from DEFAULT_KSU_MNT_GROUP_ID
+  range when in KSU domain, normal range otherwise (both from
+  the same mnt_group_ida)
+- mnt_release_group_id(): simplified to always use mnt_group_ida
+  since there is no longer a separate IDA to track
+- Replace static IDA with atomic counter for KSU mount tracking
+
+## susfs: fix SUS_MAP race in pagemap_read and harden mnt_id reorder
+pagemap_read race fix (upstream f0dccf22):
+Move the SUS_MAP vma check in pagemap_read() to BEFORE
+up_read(&mm->mmap_sem). Previously find_vma() was called after
+the mmap lock was released, creating a use-after-free race where
+the vma could be freed between unlock and the sus_map flag check.
+
+## susfs_reorder_mnt_id hardening (upstream 624a0877 + 96ad0915):
+- Add atomic64_read(&susfs_ksu_mounts) early return to skip
+  reordering when no KSU mounts exist
+- Use proper namespace_sem + mount_hash locking instead of
+  get_mnt_ns/put_mnt_ns (which only prevents namespace
+  destruction, not concurrent mount modifications)
+- Add list_empty() guard before list_first_entry()
+- Note: kernel 5.4 uses linked lists (not rb-trees), so the
+  upstream rb_next() traversal is adapted to list_for_each_entry()
+
+## SECURITY: fix allow list bypass in SuSFS su compat handler
+The SuSFS variant of ksu_handle_execveat_sucompat() was missing the
+critical ksu_is_allow_uid_for_current() check that gates root access
+to only allow-listed UIDs.
+
+Without this check, ANY application calling execve("/system/bin/su")
+would reach escape_with_root_profile() and gain full root credentials
+(UID 0, CAP_FULL_SET, SELinux su domain) regardless of whether the
+app was in the KernelSU allow list.
+
+The non-SuSFS variant (ksu_handle_execve_sucompat, line 146) has
+this check. The SuSFS variant was introduced with a different function
+signature (struct filename** instead of const char __user**) but the
+allow list guard was not carried over.
+
+Fix: add ksu_is_allow_uid_for_current() check after
+ksu_handle_execveat_init() and before the su path comparison,
+matching the non-SuSFS variant's security model.
+
+# `v1.1.1` What's New?
+- Enable edge limit support for lemonadep
+- Add haptic level adjustment for aw8697
+- Implement USB2 fast charge mode for oplus_chg charger
+
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/1a18fc2ea0042557e1b758d557c35e1690f1eb25* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/4b77ef5d1c0f963f3b24f439c11b22a56cc4f63c* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/24c799b1493a3b95d49a9bf2c1659b580fc2f93e*
+
+## arm64: lemonadep: Enable edge limit support
+Uncomment `fw_edge_limit_support` in `lemonadep-19815-t0.dtsi` and `lemonadep-19815.dtsi` to enable feature.
+
+## aw8697: Add haptic level adjustment
+Add `level` field to `struct aw8697`. Implement `aw8697_haptic_set_level()` for gain adjustment (level * gain / 3, max 255). Modify `aw8697_haptic_set_gain()` to use it. Init level=3. Add sysfs `level` attr (0-10 range) for user control.
+
+## oplus_chg: charger: Implement usb2 fast charge mode
+Add module params: `force_fast_charge` (int, default 0), `ffc_val` (int, default 900). In `oplus_chg_set_input_current_limit`, set current_limit to `ffc_val` if `force_fast_charge > 0`, else use `input_current_usb_ma`.
+
+# `v1.1.0` What's New?
+- KernelSU init error propagation with proper rollback
+- SUSFS/KernelSU critical bug fixes and code hardening
+- AVC spoof early activation (~41s → ~2s)
+- YAKT based runtime optimizations into kernel source
+- Thermal safety tuning for SM8350
+- Stability & consistency fixes for optimization commits
+
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/654173741935c9e76bf39a7cb5b6259ca436b898* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/9dc8097138572c9515297315352b05a18086e04b* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/2e56d003daf123387dcb698968d76fcef5e538a3* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/cf344d20bdd4bbb637318b8de5b768910a5eda59* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/31c461435d1ff372c127524c58864ae85469fc44* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/521dcf8e0c967228aa80dc007dd23f24c75b46c7* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/a491d0bbba504c276a15cf27f23a8efbed5d2a4a* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/b092e3b2278c64d1f3666def284d388e32a6cfd5* *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/a0e9466c5da59ce96fd37ffb7a79889f69efb5f6*
+
+## kernelsu: add goto-based init rollback for error propagation
+All subsystem `_init()` functions now return `int` instead of `void`. Implemented goto-based cleanup chain in `kernelsu_init()` — if any init step fails, all previously initialized subsystems are properly torn down. Consistent signature changes across 23 files.
+
+## susfs/kernelsu: critical bug fixes and code hardening
+- Fix potential deadlock in `susfs_update_sus_kstat()`: move sleeping allocations outside spinlock
+- Fix `susfs_spoof_uname()`: replace unreliable `spin_is_locked()` with proper trylock pattern
+- Fix `d_path()` error handling: use `IS_ERR_OR_NULL()` instead of bare NULL check
+- Fix list traversal: hold spinlock during `list_for_each_entry_safe` to prevent races
+- Replace all `strncpy()` with `strscpy()` for guaranteed null-termination (30 occurrences)
+- Abort `kernelsu_init()` if `prepare_creds()` fails instead of continuing with NULL cred
+
+## kernelsu: activate avc_spoof at init second_stage instead of boot_completed
+AVC spoof kprobe was registering at `boot_completed` (~41s), leaving a ~39s window where SELinux denials were visible in logcat. Now activates at `init second_stage` (~2s) by reusing cached SIDs from `cache_sid()`. Added idempotent guard to prevent double kprobe registration.
+
+## kernel: YAKT runtime optimizations into kernel source
+Port runtime tweaks from [YAKT](https://github.com/NotZeetaa/YAKT) v17 Magisk module directly into kernel source defaults. No userspace module needed — all optimizations active from boot without the 30-second delay.
+- **Scheduler**: tunable_scaling LOG→NONE, min_granularity 750us→1ms, wakeup_granularity 1ms→1.5ms, child_runs_first enabled, migration_cost 500us→200us
+- **Qualcomm scheduler**: colocation threshold 35→20 (more aggressive top-app boost while filtering idle tasks)
+- **Timer**: timer_migration disabled (deeper CPU sleep states)
+- **Perf**: CPU time max 25%→10%
+- **VFS**: cache_pressure 100→50
+- **VM**: stat_interval 1s→30s, page_cluster 3→0 (ZRAM optimized), dirty_ratio 20%→30%
+- **Block I/O**: iostats disabled by default
+- **MMC**: SPI CRC disabled
+- **Network**: TCP timestamps disabled (save 12 bytes/packet)
+
+All values remain tuneable at runtime. Inspired by [YAKT](https://github.com/NotZeetaa/YAKT), [kdrag0n](https://github.com/kdrag0n), [tytydraco](https://github.com/tytydraco).
+
+## kernel: thermal safety tuning & stability fixes
+Adjust aggressive parameters for SM8350's 1+3+4 topology to prevent overheating, and fix stability issues in optimization commits:
+- `sched_migration_cost` tuned to 200us to avoid cross-cluster cache thrashing
+- `colocation_threshold` set to 20 to filter idle tasks from big/prime cores
+- `dirty_ratio` set to 30% to prevent writeback storms with Dynamic Fsync
+- **dyn_fsync**: fix data race with `WRITE_ONCE`/`READ_ONCE` on screen_on variable
+- **adrenoboost**: add u64 overflow saturation guard on busy_time
+- **defconfig**: add missing `CONFIG_WQ_POWER_EFFICIENT_DEFAULT=y`
+
+# `v1.0.2` What's New?
+- Added some kernel-level optimizations
+Commits: *https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/5d8b9397ba016893f440c8c809d6d753392fad9e*
+
+## kernel: apply Tier 1 performance optimizations from popular custom kernels
+Based on analysis of arter97, blu_spark, McQuaid, and Eva custom kernels, apply the most impactful and lowest-risk optimizations:
+
+- Enable BBR TCP congestion control as default (used by arter97, blu_spark) with `FQ` and `FQ_CODEL` schedulers for proper BBR operation
+- Change ZRAM default compressor from lzo-rle to lz4 for 2-3x faster decompression (used by arter97, blu_spark, McQuaid)
+- Switch default CPU governor from performance to schedutil for better battery life and sustained performance (used by arter97, McQuaid)
+- Enable power-efficient workqueues (used by Eva, McQuaid) to schedule non-critical work on LITTLE cores
+- Disable unnecessary debug flags (`DEBUG_INFO`, `SCHEDSTATS`, `PROFILING`, `DEBUG_STACK_USAGE`, `DEBUG_MEMORY_INIT`, `FUNCTION_ERROR_INJECTION`) for smaller kernel image and reduced runtime overhead
+
+## gpu: msm: add Adrenoboost GPU frequency boost support
+Add configurable GPU frequency boost to msm-adreno-tz governor, based on flar2's implementation used in blu_spark and ElementalX kernels.
+
+Adrenoboost artificially inflates the reported GPU busy_time by a configurable multiplier, causing the governor to scale up frequencies more aggressively. This does NOT bypass thermal protections or overclock the GPU - it only biases the DCVS decision input.
+
+Boost levels (via sysfs):
+  0 = off (default, no behavior change)
+  1 = low  (2x busy_time, good for daily use)
+  2 = medium (4x busy_time, good for gaming)
+  3 = high (5x busy_time, aggressive for benchmarks)
+
+`sysfs: /sys/class/kgsl/kgsl-3d0/devfreq/adrenoboost`
+
+Automatically detected by KernelAdiutor and Franco Kernel Manager.
+
+## fs: add Dynamic Fsync battery optimization
+Implement flar2's Dynamic Fsync feature for battery savings. When screen is off, `fsync()` calls are skipped to reduce disk I/O and CPU wakeups. When screen turns on, all pending dirty data is flushed via `ksys_sync()` to ensure data integrity.
+
+Screen state is tracked via MSM DRM notifier (Qualcomm SM8350). Feature is enabled by default and controllable via sysfs: `/sys/kernel/dyn_fsync/Fsync_enabled`
+
+# `v1.0` Inital Release
