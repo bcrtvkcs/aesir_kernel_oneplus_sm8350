@@ -63,6 +63,7 @@ struct st_susfs_hide_sus_mnts_for_non_su_procs {
 #define KSTAT_SPOOF_CTIME_TV_NSEC (1 << 9)
 #define KSTAT_SPOOF_BLOCKS (1 << 10)
 #define KSTAT_SPOOF_BLKSIZE (1 << 11)
+#define KSTAT_AUTO_SPOOF (KSTAT_SPOOF_INO | KSTAT_SPOOF_DEV | KSTAT_SPOOF_ATIME_TV_SEC | KSTAT_SPOOF_ATIME_TV_NSEC | KSTAT_SPOOF_MTIME_TV_SEC | KSTAT_SPOOF_MTIME_TV_NSEC | KSTAT_SPOOF_CTIME_TV_SEC | KSTAT_SPOOF_CTIME_TV_NSEC | KSTAT_SPOOF_BLKSIZE | KSTAT_SPOOF_BLOCKS)
 
 struct st_susfs_sus_kstat {
 	bool                                    is_statically;
