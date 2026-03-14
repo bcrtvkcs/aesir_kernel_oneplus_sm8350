@@ -4398,17 +4398,6 @@ int susfs_get_non_sus_mnt_id_from_mnt(struct mount *orig_mnt) {
 	return mnt_id;
 }
 
-u64 susfs_get_non_sus_mnt_id_unique_from_mnt(struct mount *orig_mnt) {
-	struct mount *mnt = orig_mnt;
-	u64 mnt_id_unique;
-
-	lock_mount_hash();
-	for (; mnt && mnt->mnt_parent && mnt != mnt->mnt_parent && mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
-	mnt_id_unique = mnt->mnt_id_unique;
-	unlock_mount_hash();
-	return mnt_id_unique;
-}
-
 struct vfsmount *susfs_get_non_sus_vfsmnt_from_vfsmnt(struct vfsmount *vfsmnt)
 {
 	struct mount *mnt = real_mount(vfsmnt);
