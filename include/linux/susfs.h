@@ -65,7 +65,7 @@ struct st_susfs_hide_sus_mnts_for_non_su_procs {
 #define KSTAT_SPOOF_BLKSIZE (1 << 11)
 
 struct st_susfs_sus_kstat {
-	int                                     is_statically;
+	bool                                    is_statically;
 	unsigned long                           target_ino;
 	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
 	unsigned long                           spoofed_ino;
@@ -73,11 +73,11 @@ struct st_susfs_sus_kstat {
 	unsigned int                            spoofed_nlink;
 	long long                               spoofed_size;
 	long                                    spoofed_atime_tv_sec;
-	long                                    spoofed_atime_tv_nsec;
+	unsigned long                           spoofed_atime_tv_nsec;
 	long                                    spoofed_mtime_tv_sec;
-	long                                    spoofed_mtime_tv_nsec;
+	unsigned long                           spoofed_mtime_tv_nsec;
 	long                                    spoofed_ctime_tv_sec;
-	long                                    spoofed_ctime_tv_nsec;
+	unsigned long                           spoofed_ctime_tv_nsec;
 	long long                               spoofed_blocks;
 	long                                    spoofed_blksize;
 	int                                     flags;
