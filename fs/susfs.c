@@ -421,7 +421,9 @@ void susfs_update_sus_kstat(void __user **user_info) {
 	}
 
 	spin_lock(&susfs_spin_lock_sus_kstat);
-	hash_for_each_possible(SUS_KSTAT_HLIST, tmp_entry, node, info.target_ino) {
+	{
+	unsigned int bkt_tmp;
+	hash_for_each(SUS_KSTAT_HLIST, bkt_tmp, tmp_entry, node) {
 		if (!strcmp(tmp_entry->info.target_pathname, info.target_pathname)) {
 			memcpy(&new_entry->info, &tmp_entry->info, sizeof(tmp_entry->info));
 			new_entry->target_ino = info.target_ino;
@@ -442,6 +444,7 @@ void susfs_update_sus_kstat(void __user **user_info) {
 			kfree(tmp_entry);
 			goto out_add_new_entry;
 		}
+	}
 	}
 	spin_unlock(&susfs_spin_lock_sus_kstat);
 	info.err = -ENOENT;
