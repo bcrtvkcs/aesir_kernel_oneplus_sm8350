@@ -514,33 +514,30 @@ out_spoof_kstat:
 		{
 			SUSFS_LOGI("spoofing kstat for path: %s, target_ino: %lu, target_dev: %u\n",
 					entry->info.target_pathname, target_ino, target_dev);
-			{
-			int effective_flags = entry->info.flags ? entry->info.flags : KSTAT_AUTO_SPOOF;
-			if (effective_flags & KSTAT_SPOOF_INO)
+			if (entry->info.flags & KSTAT_SPOOF_INO)
 				stat->ino = entry->info.spoofed_ino;
-			if (effective_flags & KSTAT_SPOOF_DEV)
+			if (entry->info.flags & KSTAT_SPOOF_DEV)
 				stat->dev = entry->info.spoofed_dev;
-			if (effective_flags & KSTAT_SPOOF_NLINK)
+			if (entry->info.flags & KSTAT_SPOOF_NLINK)
 				stat->nlink = entry->info.spoofed_nlink;
-			if (effective_flags & KSTAT_SPOOF_SIZE)
+			if (entry->info.flags & KSTAT_SPOOF_SIZE)
 				stat->size = entry->info.spoofed_size;
-			if (effective_flags & KSTAT_SPOOF_ATIME_TV_SEC)
+			if (entry->info.flags & KSTAT_SPOOF_ATIME_TV_SEC)
 				stat->atime.tv_sec = entry->info.spoofed_atime_tv_sec;
-			if (effective_flags & KSTAT_SPOOF_ATIME_TV_NSEC)
+			if (entry->info.flags & KSTAT_SPOOF_ATIME_TV_NSEC)
 				stat->atime.tv_nsec = entry->info.spoofed_atime_tv_nsec;
-			if (effective_flags & KSTAT_SPOOF_MTIME_TV_SEC)
+			if (entry->info.flags & KSTAT_SPOOF_MTIME_TV_SEC)
 				stat->mtime.tv_sec = entry->info.spoofed_mtime_tv_sec;
-			if (effective_flags & KSTAT_SPOOF_MTIME_TV_NSEC)
+			if (entry->info.flags & KSTAT_SPOOF_MTIME_TV_NSEC)
 				stat->mtime.tv_nsec = entry->info.spoofed_mtime_tv_nsec;
-			if (effective_flags & KSTAT_SPOOF_CTIME_TV_SEC)
+			if (entry->info.flags & KSTAT_SPOOF_CTIME_TV_SEC)
 				stat->ctime.tv_sec = entry->info.spoofed_ctime_tv_sec;
-			if (effective_flags & KSTAT_SPOOF_CTIME_TV_NSEC)
+			if (entry->info.flags & KSTAT_SPOOF_CTIME_TV_NSEC)
 				stat->ctime.tv_nsec = entry->info.spoofed_ctime_tv_nsec;
-			if (effective_flags & KSTAT_SPOOF_BLKSIZE)
+			if (entry->info.flags & KSTAT_SPOOF_BLKSIZE)
 				stat->blksize = entry->info.spoofed_blksize;
-			if (effective_flags & KSTAT_SPOOF_BLOCKS)
+			if (entry->info.flags & KSTAT_SPOOF_BLOCKS)
 				stat->blocks = entry->info.spoofed_blocks;
-			}
 			rcu_read_unlock();
 			return;
 		}

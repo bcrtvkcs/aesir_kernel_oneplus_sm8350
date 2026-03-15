@@ -27,9 +27,7 @@
 /* sus_path */
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 struct st_susfs_sus_path {
-	unsigned long                           target_ino;
 	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
-	unsigned int                            i_uid;
 	int                                     err;
 };
 
@@ -63,10 +61,9 @@ struct st_susfs_hide_sus_mnts_for_non_su_procs {
 #define KSTAT_SPOOF_CTIME_TV_NSEC (1 << 9)
 #define KSTAT_SPOOF_BLOCKS (1 << 10)
 #define KSTAT_SPOOF_BLKSIZE (1 << 11)
-#define KSTAT_AUTO_SPOOF (KSTAT_SPOOF_INO | KSTAT_SPOOF_DEV | KSTAT_SPOOF_SIZE | KSTAT_SPOOF_ATIME_TV_SEC | KSTAT_SPOOF_ATIME_TV_NSEC | KSTAT_SPOOF_MTIME_TV_SEC | KSTAT_SPOOF_MTIME_TV_NSEC | KSTAT_SPOOF_CTIME_TV_SEC | KSTAT_SPOOF_CTIME_TV_NSEC | KSTAT_SPOOF_BLKSIZE | KSTAT_SPOOF_BLOCKS)
 
 struct st_susfs_sus_kstat {
-	bool                                    is_statically;
+	int                                     is_statically;
 	unsigned long                           target_ino;
 	char                                    target_pathname[SUSFS_MAX_LEN_PATHNAME];
 	unsigned long                           spoofed_ino;
@@ -74,15 +71,15 @@ struct st_susfs_sus_kstat {
 	unsigned int                            spoofed_nlink;
 	long long                               spoofed_size;
 	long                                    spoofed_atime_tv_sec;
-	long                                    spoofed_mtime_tv_sec;
-	long                                    spoofed_ctime_tv_sec;
 	long                                    spoofed_atime_tv_nsec;
+	long                                    spoofed_mtime_tv_sec;
 	long                                    spoofed_mtime_tv_nsec;
+	long                                    spoofed_ctime_tv_sec;
 	long                                    spoofed_ctime_tv_nsec;
-	unsigned long                           spoofed_blksize;
-	unsigned long long                      spoofed_blocks;
-	int                                     err;
+	long long                               spoofed_blocks;
+	long                                    spoofed_blksize;
 	int                                     flags;
+	int                                     err;
 };
 
 struct st_susfs_sus_kstat_hlist {
