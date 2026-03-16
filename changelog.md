@@ -1,3 +1,10 @@
+# `v2.0.1` What's New?
+- SuSFS: fix `update_sus_kstat` to correctly locate entries after bind mount inode change (use `hash_for_each` instead of `hash_for_each_possible` for pathname-based lookup)
+- SuSFS: sync `st_susfs_sus_kstat` `spoofed_*_tv_nsec` field types with upstream gki-android16-6.12 (`long` → `unsigned long`)
+- SuSFS: update susfs4ksu binary source to modular build structure from gki-android16-6.12
+
+Commits: [ae8022084cbf](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/ae8022084cbf) [44cfe5c87850](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/44cfe5c87850)
+
 # `v2.0.0` What's New?
 - **Huge refactor**: kernel source rebuilt from ground up with comprehensive performance and scheduler optimizations
 - BORE (Burst-Oriented Response Enhancer) Scheduler v5.1.0 integrated with WALT coexistence
