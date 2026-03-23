@@ -747,6 +747,7 @@ static void avc_audit_post_callback(struct audit_buffer *ab, void *a)
 		audit_log_format(ab, " tcontext=%s", scontext);
 		kfree(scontext);
 	}
+	goto out_tclass;
 out_tclass:
 
 	audit_log_format(ab, " tclass=%s", secclass_map[sad->tclass-1].name);

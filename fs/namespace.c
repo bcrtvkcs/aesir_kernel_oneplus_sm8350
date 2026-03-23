@@ -1182,7 +1182,7 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root, int flag)
 	struct super_block *sb = old->mnt.mnt_sb;
 	struct mount *mnt;
 	int err;
-	bool is_mnt_ksu_unshared = false;
+	bool is_mnt_ksu_unshared __maybe_unused = false;
 
 	/* ALWAYS USE STANDARD ALLOCATION FLOW TO INITIALIZE PER-CPU AND LISTS */
 	mnt = alloc_vfsmnt(old->mnt_devname);
