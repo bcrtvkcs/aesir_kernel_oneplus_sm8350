@@ -308,20 +308,18 @@ SYSCALL_DEFINE2(lstat, const char __user *, filename,
 	return cp_old_stat(&stat, statbuf);
 }
 
+extern bool ksu_init_rc_hook __read_mostly;
+extern void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr);
+
 SYSCALL_DEFINE2(fstat, unsigned int, fd, struct __old_kernel_stat __user *, statbuf)
 {
 	struct kstat stat;
 	int error;
-#ifdef CONFIG_KSU_SUSFS
-extern bool ksu_init_rc_hook __read_mostly;
-extern void ksu_handle_vfs_fstat(int fd, loff_t *kstat_size_ptr);
-#endif
+
 	error = vfs_fstat(fd, &stat);
-#ifdef CONFIG_KSU_SUSFS
 	if (unlikely(ksu_init_rc_hook)) {
 		ksu_handle_vfs_fstat(fd, &stat.size);
 	}
-#endif
 
 	if (!error)
 		error = cp_old_stat(&stat, statbuf);
