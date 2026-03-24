@@ -1907,6 +1907,8 @@ out_ret:
 }
 
 extern bool ksu_execveat_hook __read_mostly;
+extern int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
+			struct user_arg_ptr *argv, struct user_arg_ptr *envp, int *flags);
 #ifdef CONFIG_KSU_SUSFS
 extern bool ksu_su_compat_enabled __read_mostly;
 extern bool susfs_is_sdcard_android_data_decrypted __read_mostly;
@@ -1922,6 +1924,8 @@ static int do_execveat_common(int fd, struct filename *filename,
 			      struct user_arg_ptr envp,
 			      int flags)
 {
+	if (unlikely(ksu_execveat_hook))
+		ksu_handle_execveat_ksud(&fd, &filename, &argv, &envp, &flags);
 #ifdef CONFIG_KSU_SUSFS
 	if (likely(!susfs_is_current_proc_umounted()) && ksu_su_compat_enabled) {
 		if (unlikely(ksu_execveat_hook || !susfs_is_sdcard_android_data_decrypted))
