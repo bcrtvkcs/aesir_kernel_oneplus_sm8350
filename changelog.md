@@ -1,5 +1,5 @@
 # `v2.1.0` What's New?
-- **SuSFS officially dropped**: Removed to improve compatibility, eliminate unnecessary CPU cycles, and reduce battery consumption. It is completely redundant when modern solutions like ReZygisk + TreatWheel or ZygiskNext are available. All `CONFIG_KSU_SUSFS` guards, variables, and specific hooks across the kernel source (fs, namespace, selinux) have been cleaned up.
+- **SuSFS is now dropped**: Removed to improve compatibility, eliminate unnecessary CPU cycles, and reduce battery consumption. It is completely redundant when modern solutions like ReZygisk + TreatWheel or ZygiskNext are available. All `CONFIG_KSU_SUSFS` guards, variables, and specific hooks across the kernel source (fs, namespace, selinux) have been cleaned up.
 - KernelSU-Next: rebased onto upstream/legacy branch, bringing late-load mode support, RCU allowlist, and RLIMIT_NPROC fixes.
 - KernelSU-Next fix: restored missing LSM (`ksu_lsm_hook_init()`) and observer (`ksu_observer_init()`) initialization for built-in/manual hooks, which were accidentally removed by upstream late-load mode commits.
 - SELinux: allowed `system_server` execmem for LSPosed injection and allowed `init` to execute `ksud` from `adb_data_file` context.
