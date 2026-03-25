@@ -1,7 +1,7 @@
 # ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.1.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
 
 <p align="center">
-  <img src="https://i.imgur.com/lfo6Z8h.png?raw=true" alt="ÆSIR Header Image"/>
+  <img src="https://i.imgur.com/Z9zaGYb.png?raw=true" alt="ÆSIR Header Image"/>
 </p>
 
 ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.1.0** integrated directly into the kernel source.
