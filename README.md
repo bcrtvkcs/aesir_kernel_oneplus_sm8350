@@ -1,10 +1,10 @@
-# ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.1.0 + SuSFS v2.0.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
+# ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.1.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
 
 <p align="center">
   <img src="https://i.imgur.com/lfo6Z8h.png?raw=true" alt="ÆSIR Header Image"/>
 </p>
 
-ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.1.0** + **SuSFS v2.0.0** integrated directly into the kernel source.
+ÆSIR Kernel is a custom kernel source for the **OnePlus 9 Pro (lemonadep)** and the **OnePlus 9 (lemonade)**. It's [upstreamed](#upstreamed-repos) from [crDroid Project](https://crdroid.net) with **KernelSU Next v3.1.0** integrated directly into the kernel source.
 
 Follow this link to join the [Telegram channel](https://t.me/aesirkernel)
 
@@ -26,11 +26,11 @@ While AI did the heavy lifting, human oversight remained mandatory. Every commit
 
 ## Problem
 
-Stock crDroid kernel does not include the newest KernelSU Next or the newest root hiding capabilities (SuSFS). Traditional root solutions are increasingly detectable by banking apps, Play Integrity API checks (SafetyNet successor), and other tamper detection mechanisms. Users who need root for legitimate purposes (ad blocking, customization, call recording, etc.) are locked out of these apps.
+Stock crDroid kernel does not include the newest KernelSU Next. Traditional root solutions are increasingly detectable by banking apps, Play Integrity API checks (SafetyNet successor), and other tamper detection mechanisms. Users who need root for legitimate purposes (ad blocking, customization, call recording, etc.) are locked out of these apps.
 
 ## Solution
 
-This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-Next) v3.1.0 and [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) v2.0.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.8 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through **9 inline syscall hooks** hand-placed in kernel source files - making detection significantly harder. SuSFS hides all root artifacts (paths, mounts, maps, kernel symbols) while SELinux remains Enforcing and Play Integrity passes at DEVICE level.
+This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) v3.1.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.8 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through 9 inline syscall hooks hand-placed in kernel source files - making detection significantly harder.
 
 ## Installation
 
@@ -41,11 +41,8 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 3. (Optional GAaps) When asked to sideload [GApps](https://nikgapps.com/crdroid-official), choose 'Yes' to reboot to recovery or 'No' if you don't want gapps and want to reboot to system. Now if you choosed to install GApps, simply sideload *GApps.zip* the same way you installed *crDroid.zip* then reboot to system.
 4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/KernelSU-Next/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
-6. Install the [BRENE module](https://github.com/rrr333nnn333/BRENE) by rrr333nnn333 from within the manager to control SuSFS features.
 
-> In step 6, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
-
-> If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 9 (ksu_susfs_bind_kstat) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
+> If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 0 (Default) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
 
 > The prebuilt zip in Releases contains the full crDroid 12.8 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
@@ -56,11 +53,8 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 3. (Optional GAaps) When asked to sideload [GApps](https://nikgapps.com/crdroid-official), choose 'Yes' to reboot to recovery or 'No' if you don't want gapps and want to reboot to system. Now if you choosed to install GApps, simply sideload *GApps.zip* the same way you installed *crDroid.zip* then reboot to system.
 4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/KernelSU-Next/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
-6. Install the [BRENE module](https://github.com/rrr333nnn333/BRENE) by rrr333nnn333 from within the manager to control SuSFS features.
 
-> In step 6, you can also use the [susfs4ksu module](https://github.com/sidex15/susfs4ksu-module/actions/workflows/build.yml) nightly builds from sidex15, but [BRENE module](https://github.com/rrr333nnn333/BRENE) **hides better**.
-
-> If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 9 (ksu_susfs_bind_kstat) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
+> If you are using [Bindhosts](https://github.com/bindhosts/bindhosts), select Mode 0 (Default) in the module settings. Otherwise, any application will be able to **SEE** your modified hosts file.
 
 > I can't test the OnePlus 9 (lemonade)'s prebuilt zip because I don't have the device. It probably works fine, but there might be something I don't know about. Just in case. If you would like to test it and share your results, I would be appriciate it. If you encounter a bug or want to have a feature request, [please let me know](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/issues).
 
@@ -77,32 +71,8 @@ This fork integrates [KernelSU Next](https://github.com/KernelSU-Next/KernelSU-N
 | **Device** | OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade) |
 | **SoC** | Qualcomm Snapdragon 888 (SM8350/Lahaina) |
 | **KernelSU Next** | v3.1.0 (version code 33035) |
-| **SuSFS** | v2.0.0 |
 | **SELinux** | Enforcing |
 | **Hook Mode** | GKI1 - Inline (manual) syscall hooks |
-
-### SuSFS v2.0.0 Features
-
-| Feature | Status |
-|---------|--------|
-| SUS Path Support | Enabled |
-| SUS Maps Support | Enabled |
-| SUS Mount Support | Enabled |
-| SUS Kstat Support | Enabled |
-| Spoof Uname Support | Enabled |
-| Spoof Cmdline/Bootconfig | Enabled |
-| Open Redirect Support | Enabled |
-| Logging Support | Enabled |
-| Hide KSU SuSFS Symbols | Enabled |
-| AVC Log Spoofing | Enabled |
-| ~~Try Umount Support~~ | Deprecated |
-| ~~Auto Default Mount~~ | Deprecated |
-| ~~Auto Bind Mount~~ | Deprecated |
-| ~~Auto Try Umount Bind~~ | Deprecated |
-| ~~Magic Mount Support~~ | Deprecated |
-| ~~OverlayFS Auto Kstat Support~~ | Deprecated |
-
-> **Deprecated features:** SuSFS v2.0.0 intentionally removed the legacy per-mount management features (try_umount, auto mounts, magic mount, overlayfs auto kstat). These have been replaced by a single unified **SUS Mount Support** mechanism `hide_sus_mnts_for_non_su_procs` that hides all suspicious mounts from non-root processes at once - simpler configuration, smaller attack surface, same result.
 
 ### Inline Syscall Hooks
 
@@ -294,7 +264,7 @@ brunch lemonade
 The build system will automatically:
 
 - Use the `vendor/lahaina-qgki_defconfig` defconfig to compile the kernel
-- Enable KernelSU + SUSFS (via Kconfig defaults)
+- Enable KernelSU (via Kconfig defaults)
 - Package the entire ROM
 
 ### 8. Output
@@ -322,14 +292,12 @@ There is no need to compile the kernel separately - `brunch` handles everything.
     <tr>
       <th>OnePlus 9 Pro (lemonadep) Repos</th>
       <th>OnePlus 9 (lemonade) Repos</th>
-      <th>KernelSU Next & SuSFS Repos</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonadep">android_device_oneplus_lemonadep</a></td>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_lemonade">android_device_oneplus_lemonade</a></td>
-      <td rowspan="2" align="center" valign="middle"><a href="https://github.com/bcrtvkcs/KernelSU-Next">KernelSU Next repo</a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_device_oneplus_sm8350-common">android_device_oneplus_sm8350-common</a></td>
@@ -338,7 +306,6 @@ There is no need to compile the kernel separately - `brunch` handles everything.
     <tr>
       <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus-lemonadep">proprietary_vendor_oneplus-lemonadep</a></td>
       <td><a href="https://gitlab.com/crdroidandroid/proprietary_vendor_oneplus_lemonade">proprietary_vendor_oneplus_lemonade</a></td>
-      <td rowspan="3" align="center" valign="middle"><a href="https://gitlab.com/bcrtvkcs/susfs4ksu">SuSFS repo</a></td>
     </tr>
     <tr>
       <td><a href="https://github.com/crdroidandroid/android_hardware_oplus">android_hardware_oplus</a></td>
@@ -353,8 +320,7 @@ There is no need to compile the kernel separately - `brunch` handles everything.
 
 ## Credits
 #### Core
-- [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next) - Kernel-based root solution
-- [SuSFS](https://gitlab.com/simonpunk/susfs4ksu) - Root hiding subsystem by simonpunk
+- [KernelSU-Next](https://github.com/bcrtvkcs/KernelSU-Next) - Kernel-based root solution upstreamed from [KernelSU-Next](ttps://github.com/KernelSU-Next/KernelSU-Next)
 - [crDroid](https://crdroid.net/) - Custom Android ROM
 #### Performance Optimizations
 - [NotZeetaa / YAKT](https://github.com/NotZeetaa/YAKT) - Yet Another Kernel Tweaker; runtime tuning defaults ported to source
