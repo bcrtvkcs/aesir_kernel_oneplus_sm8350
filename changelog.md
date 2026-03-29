@@ -1,4 +1,4 @@
-# `v2.1.2` What's New?# `v2.1.2` What's New?
+# `v2.1.2` What's New?
 - KernelSU-Next: allowlist now uses workqueue instead of `init` task_work for saving, preventing potential boot delays.
 - KernelSU-Next: throne_tracker: offloaded runtime tracking to `delayed_work` with retry logic (up to 10 retries, 100ms apart) to handle concurrent `packages.list` updates from Android; fixed deadlocks in `iterate_dir`; resolved race condition in async kworker state via dedicated `ksu_throne_work_data` struct.
 - KernelSU-Next: allowlist: optimized `ksu_get_root_profile` linear scan.
