@@ -155,7 +155,7 @@ Disabled at compile time: `SCHEDSTATS`, `DEBUG_INFO`, `DEBUG_STACK_USAGE`, `DEBU
 
 ### 1. Requirements
 
-- Ubuntu 20.04+ (or 22.04/24.04) (Linux Mint recommended)
+- Ubuntu 20.04+ (or 22.04/24.04)
 - Minimum 400 GB free disk space
 - Minimum 16 GB RAM (32 GB recommended)
 - Good internet connection (source code is ~100 GB)
