@@ -316,7 +316,7 @@ There is no need to compile the kernel separately - `brunch` handles everything.
 
 ## Credits
 #### Core
-- [KernelSU-Next](https://github.com/bcrtvkcs/KernelSU-Next) - Kernel-based root solution upstreamed from [KernelSU-Next](ttps://github.com/KernelSU-Next/KernelSU-Next)
+- [KernelSU-Next](https://github.com/bcrtvkcs/KernelSU-Next) - Kernel-based root solution upstreamed from [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
 - [crDroid](https://crdroid.net/) - Custom Android ROM
 #### Performance Optimizations
 - [NotZeetaa / YAKT](https://github.com/NotZeetaa/YAKT) - Yet Another Kernel Tweaker; runtime tuning defaults ported to source
