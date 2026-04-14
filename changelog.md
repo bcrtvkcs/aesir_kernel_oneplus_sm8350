@@ -1,3 +1,6 @@
+# `v2.1.6` What's New?
+- **KernelSU-Next**: Updated to tag `v3.2.0`
+
 # `v2.1.5` What's New?
 - ROM-side changes. Here's is the [rom changelog](https://crdroid.net/lemonadep/12#changelog)
 
