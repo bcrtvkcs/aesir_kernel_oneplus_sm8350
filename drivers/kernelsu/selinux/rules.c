@@ -170,6 +170,70 @@ static int apply_kernelsu_rules_fn(void *ptr)
     ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "getpgid");
     ksu_allow(db, "system_server", KERNEL_SU_DOMAIN, "process", "sigkill");
 
+    // Allow executable memory for runtime code generation in privileged domains
+    ksu_allow(db, "system_server", "system_server", "process", "execmem");
+    ksu_allow(db, "zygote", "zygote", "process", "execmem");
+
+    // Trusted module file type — privileged domain access only
+    ksu_type(db, "magisk_file", "file_type");
+    ksu_typeattribute(db, "magisk_file", "mlstrustedobject");
+    ksu_allow(db, "init", "magisk_file", "file", ALL);
+    ksu_allow(db, "init", "magisk_file", "dir", ALL);
+    ksu_allow(db, "kernel", "magisk_file", "file", ALL);
+    ksu_allow(db, "kernel", "magisk_file", "dir", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "file", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "dir", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "fifo_file", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "chr_file", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "lnk_file", ALL);
+    ksu_allow(db, "zygote", "magisk_file", "sock_file", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "file", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "dir", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "fifo_file", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "chr_file", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "lnk_file", ALL);
+    ksu_allow(db, "system_server", "magisk_file", "sock_file", ALL);
+    ksu_allow(db, KERNEL_SU_DOMAIN, "magisk_file", ALL, ALL);
+    ksu_allow(db, "shell", "magisk_file", "file", ALL);
+    ksu_allow(db, "shell", "magisk_file", "dir", ALL);
+
+    // Allow dex2oat to operate without domain transitions
+    ksu_allow(db, "dex2oat", "dex2oat_exec", "file", "execute_no_trans");
+    ksu_allow(db, "dex2oat", "system_linker_exec", "file", "execute_no_trans");
+    ksu_allow(db, "dex2oat", "unlabeled", "file", ALL);
+    ksu_allow(db, "dex2oat", "tmpfs", "file", ALL);
+    ksu_allow(db, "zygote", "dex2oat", "unix_stream_socket", ALL);
+    ksu_allow(db, "shell", "shell", "dir", "write");
+
+    // Trusted framework file type — restricted to system services
+    ksu_type(db, "xposed_file", "file_type");
+    ksu_typeattribute(db, "xposed_file", "mlstrustedobject");
+    ksu_allow(db, "dex2oat", "xposed_file", "file", ALL);
+    ksu_allow(db, "dex2oat", "xposed_file", "dir", ALL);
+    ksu_allow(db, "installd", "xposed_file", "file", ALL);
+    ksu_allow(db, "installd", "xposed_file", "dir", ALL);
+    ksu_allow(db, "isolated_app", "xposed_file", "file", ALL);
+    ksu_allow(db, "isolated_app", "xposed_file", "dir", ALL);
+    ksu_allow(db, "shell", "xposed_file", "file", ALL);
+    ksu_allow(db, "shell", "xposed_file", "dir", ALL);
+
+    // Trusted data file type — restricted to system services
+    ksu_type(db, "xposed_data", "file_type");
+    ksu_typeattribute(db, "xposed_data", "mlstrustedobject");
+    ksu_allow(db, "system_server", "xposed_data", "file", ALL);
+    ksu_allow(db, "system_server", "xposed_data", "dir", ALL);
+    ksu_allow(db, "zygote", "xposed_data", "file", ALL);
+    ksu_allow(db, "zygote", "xposed_data", "dir", ALL);
+    ksu_allow(db, "init", "xposed_data", "file", ALL);
+    ksu_allow(db, "init", "xposed_data", "dir", ALL);
+    ksu_allow(db, "dex2oat", "xposed_data", "file", ALL);
+    ksu_allow(db, "dex2oat", "xposed_data", "dir", ALL);
+    ksu_allow(db, "installd", "xposed_data", "file", ALL);
+    ksu_allow(db, "installd", "xposed_data", "dir", ALL);
+    ksu_allow(db, "shell", "xposed_data", "file", ALL);
+    ksu_allow(db, "shell", "xposed_data", "dir", ALL);
+    ksu_allow(db, KERNEL_SU_DOMAIN, "xposed_data", ALL, ALL);
+
     return 0;
 }
 
