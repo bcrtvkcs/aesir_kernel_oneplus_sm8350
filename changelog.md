@@ -1,3 +1,10 @@
+# `v2.1.4` What's New?
+- **KernelSU-Next**: kernel: Replace GFP_ATOMIC flags in throne tracker
+- **KernelSU-Next**: Revert "kernel: selinux: fix slow path string comparison and remove dead code"
+- ROM-side changes. Here's is the [rom changelog](https://crdroid.net/lemonadep/12#changelog)
+
+Commits: [2ab0a0d3](https://github.com/bcrtvkcs/KernelSU-Next/commit/2ab0a0d3e8d1da0b2a25650c5d6dc3c1d47d6f94) [798945d0](https://github.com/bcrtvkcs/KernelSU-Next/commit/798945d0ecf8388baa6fadb8017cb25fd3443858)
+
 # `v2.1.3` What's New?
 - **KernelSU-Next**: complete source layout reorganization into logical subdirectories (`core/`, `feature/`, `hook/`, `infra/`, `manager/`, `policy/`, `runtime/`, `supercall/`, `uapi/`); unified uapi headers extracted to top-level `uapi/` directory.
 - **KernelSU-Next**: sucompat: added fallback to `sh` when `ksud` is unavailable; fixed `strncpy_from_user_nofault` fallback to preemptible read on nofault failure.
