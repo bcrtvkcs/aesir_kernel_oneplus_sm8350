@@ -1,3 +1,6 @@
+# `v2.1.5` What's New?
+- ROM-side changes. Here's is the [rom changelog](https://crdroid.net/lemonadep/12#changelog)
+
 # `v2.1.4` What's New?
 - **KernelSU-Next**: kernel: Replace GFP_ATOMIC flags in throne tracker
 - **KernelSU-Next**: Revert "kernel: selinux: fix slow path string comparison and remove dead code"
