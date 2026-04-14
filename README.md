@@ -30,7 +30,7 @@ Stock crDroid kernel does not include the newest KernelSU Next. Traditional root
 
 ## Solution
 
-This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) v3.1.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.8 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through 9 inline syscall hooks hand-placed in kernel source files - making detection significantly harder.
+This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) v3.1.0 directly into the kernel source tree, shipped as a single flashable crDroid 12.9 (Android 16) ROM (latest) zip. Instead of kprobes, root is implemented through 9 inline syscall hooks hand-placed in kernel source files - making detection significantly harder.
 
 ## Installation
 
@@ -42,7 +42,7 @@ This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) 
 4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/KernelSU-Next/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
 
-> The prebuilt zip in Releases contains the full crDroid 12.8 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.9 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### Instructions for **OnePlus 9 (lemonade)**
 
@@ -54,7 +54,7 @@ This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) 
 
 > I can't test the OnePlus 9 (lemonade)'s prebuilt zip because I don't have the device. It probably works fine, but there might be something I don't know about. Just in case. If you would like to test it and share your results, I would be appriciate it. If you encounter a bug or want to have a feature request, [please let me know](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/issues).
 
-> The prebuilt zip in Releases contains the full crDroid 12.8 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
+> The prebuilt zip in Releases contains the full crDroid 12.9 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
 
 ### If you'd like to support the project, feel free to leave a star ⭐
 
@@ -63,10 +63,10 @@ This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) 
 | Component | Details |
 |-----------|---------|
 | **Kernel** | 5.4.302 (aarch64) |
-| **ROM** | crDroid 12.8 (Android 16) (latest) |
+| **ROM** | crDroid 12.9 (Android 16) (latest) |
 | **Device** | OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade) |
 | **SoC** | Qualcomm Snapdragon 888 (SM8350/Lahaina) |
-| **KernelSU Next** | v3.1.0 (version code 33123) |
+| **KernelSU Next** | v3.1.0 (version code 33127) |
 | **SELinux** | Enforcing |
 | **Hook Mode** | GKI1 - Inline (manual) syscall hooks |
 
@@ -149,7 +149,7 @@ Disabled at compile time: `SCHEDSTATS`, `DEBUG_INFO`, `DEBUG_STACK_USAGE`, `DEBU
 
 ## Building from Source
 
-### crDroid 12.8 (Android 16) - OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade)  Build Guide
+### crDroid 12.9 (Android 16) - OnePlus 9 Pro (lemonadep) or OnePlus 9 (lemonade)  Build Guide
 
 ÆSIR Kernel is built as part of the full crDroid ROM - there is no need to compile the kernel separately. The `brunch` build system handles everything automatically.
 
