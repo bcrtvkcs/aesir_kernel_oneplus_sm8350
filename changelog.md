@@ -1,3 +1,9 @@
+# `v2.2.0` What's New?
+- **Upstream**: Merged 65 upstream backports from crdroid/16.0 — bpf, bpfilter, sysctl, sockmap, BPF tracing, seccomp, `path_umount` for KernelSU, KernelSU hook guard fixes, device-specific improvements (lemonadep edge limit, aw8697 haptic, oplus_chg USB2 fast charge).
+- ROM-side changes. Here's is the [rom changelog](https://crdroid.net/lemonadep/12#changelog)
+
+Commits: [fd070f3a](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/commit/fd070f3a690b)
+
 # `v2.1.6` What's New?
 - **KernelSU-Next**: Updated to tag `v3.2.0`
 
