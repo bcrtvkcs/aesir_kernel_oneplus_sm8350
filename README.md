@@ -39,7 +39,7 @@ This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) 
 1. Follow the official [crDroid installation guide for OnePlus 9 Pro](https://crdroid.net/lemonadep/12/install).
 2. At the **zip flashing step**, flash the zip you downloaded from this repository's [releases](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/releases) *instead of the stock crDroid zip*.
 3. (Optional GAaps) When asked to sideload [GApps](https://nikgapps.com/crdroid-official), choose 'Yes' to reboot to recovery or 'No' if you don't want gapps and want to reboot to system. Now if you choosed to install GApps, simply sideload *GApps.zip* the same way you installed *crDroid.zip* then reboot to system.
-4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/KernelSU-Next/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
+4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/bcrtvkcs/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
 
 > The prebuilt zip in Releases contains the full crDroid 12.9 ROM (latest) + ÆSIR Kernel. The installation process is identical to a standard crDroid installation. The build script retrieves the sources directly from the [crDroid upstream repositories](#upstreamed-repos). Whenever an update is released on the official crDroid website, I rebuild the ROM and the kernel and post them in the Releases section. Alternatively, you can [build the ROM with my custom kernel repository yourself](#building-from-source).
@@ -49,7 +49,7 @@ This fork integrates [KernelSU Next](https://github.com/bcrtvkcs/KernelSU-Next) 
 1. Follow the official [crDroid installation guide for OnePlus 9](https://crdroid.net/lemonade/12/install).
 2. At the **zip flashing step**, flash the zip you downloaded from this repository's [releases](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/releases) *instead of the stock crDroid zip*.
 3. (Optional GAaps) When asked to sideload [GApps](https://nikgapps.com/crdroid-official), choose 'Yes' to reboot to recovery or 'No' if you don't want gapps and want to reboot to system. Now if you choosed to install GApps, simply sideload *GApps.zip* the same way you installed *crDroid.zip* then reboot to system.
-4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/KernelSU-Next/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
+4. After booting up, install the latest version of [KernelSU Next manager](https://github.com/bcrtvkcs/KernelSU-Next/releases) on your device. Alternatively, you can use the [nightly manager](https://t.me/ksunext_ci).
 5. (Optional) Open KernelSU Next manager and install the a meta-module for Magick Mount module management alongside OverlayFS. *Hybrid Mount* recommended.
 
 > I can't test the OnePlus 9 (lemonade)'s prebuilt zip because I don't have the device. It probably works fine, but there might be something I don't know about. Just in case. If you would like to test it and share your results, I would be appriciate it. If you encounter a bug or want to have a feature request, [please let me know](https://github.com/bcrtvkcs/aesir_kernel_oneplus_sm8350/issues).
