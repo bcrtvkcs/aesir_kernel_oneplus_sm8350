@@ -1,3 +1,9 @@
+# `v2.2.1` What's New?
+- **KernelSU-Next**: selinux/rules: fixed cross-CPU rwlock release bug — pinned task to current CPU via `set_cpus_allowed_ptr()` before acquiring write lock, replacing the previous `lockdep_off/on()` hack; extracted `ksu_get_current_cpumask_t()` helper with `KSU_COMPAT_HAS_BACKPORTED_CPUS_PTR` Kbuild guard for kernels < 5.2 that have `cpus_ptr` backported.
+- **KernelSU-Next**: kernel_compat: changed `ksu_kvfree` parameter to `const void *` for consistency with declaration and usage.
+
+Commits: [ff7b3b4](https://github.com/bcrtvkcs/KernelSU-Next/commit/ff7b3b4) [fc33995](https://github.com/bcrtvkcs/KernelSU-Next/commit/fc33995)
+
 # `v2.2.0` What's New?
 - **Upstream**: Merged 65 upstream backports from crdroid/16.0 — bpf, bpfilter, sysctl, sockmap, BPF tracing, seccomp, `path_umount` for KernelSU, KernelSU hook guard fixes, device-specific improvements (lemonadep edge limit, aw8697 haptic, oplus_chg USB2 fast charge).
 - ROM-side changes. Here's is the [rom changelog](https://crdroid.net/lemonadep/12#changelog)
