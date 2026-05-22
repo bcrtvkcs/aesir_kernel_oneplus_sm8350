@@ -1,3 +1,8 @@
+# ⚠️ PROJECT ON HOLD
+This project is currently on hold as crDroid now includes the latest KernelSU Next in official builds. Use the official crDroid ROM from [crdroid.net](https://crdroid.net/lemonadep/12) - it already includes KernelSU Next v3.1.0. Development will resume if/when official support is dropped.
+
+---
+
 # ÆSIR Kernel | Divine Power, Silent Dominion. | KernelSU Next v3.1.0 for OnePlus 9 Pro (lemonadep) & OnePlus 9 (lemonade)
 
 <p align="center">
@@ -11,7 +16,7 @@ Follow this link to join the [Telegram channel](https://t.me/aesirkernel)
 **I know what I'm doing. Take me to the** [installation](#installation)
 
 # **AI Awareness Notice:**
-⚠️ **Disclaimer**: This code has been *enhanced* with **Claude Code**.
+**Disclaimer**: This code has been *enhanced* with **Claude Code**.
 
 While AI did the heavy lifting, human oversight remained mandatory. Every commit has been **manually reviewed**, and the entire codebase is **fully tested** and **verified to work correctly**. No robots were allowed to merge code unsupervised.
 
